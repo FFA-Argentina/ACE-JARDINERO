@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayudante de Jardinería</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500&family=Barlow+Condensed:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f2f0eb;--sf:#ebe8e1;--sf2:#e2dfd7;
+  --ink:#1c1c17;--ink2:#4a4a3e;--ink3:#8a8a7a;
+  --moss:#334d28;--moss2:#1e3017;--sage:#6b8f5e;--sage-lt:#a8c299;
+  --rule:rgba(28,28,23,0.11);--rule2:rgba(28,28,23,0.2);
+  --warn:#7a5020;--warn-bg:#f5eadb;--info:#1e4a6e;--info-bg:#ddeaf5;
+  --red:#8b2020;--red-bg:#fce8e8;--red-lt:rgba(139,32,32,0.12);
+  --amber:#7a5c10;--amber-bg:#fdf3dc;
+  --sticky-h:52px;
+}
+html,body{height:100%;}
+body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased;}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:54px;background:var(--moss2);display:flex;flex-direction:column;align-items:center;padding:1.25rem 0;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.04);}
+.s-logo{width:24px;height:24px;border:1px solid rgba(168,194,153,0.3);border-radius:3px;display:flex;align-items:center;justify-content:center;margin-bottom:1.75rem;flex-shrink:0;}
+.s-logo svg{width:11px;height:11px;stroke:var(--sage-lt);fill:none;stroke-width:1.5;}
+.nb{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:4px;transition:background 0.15s;border:none;background:transparent;position:relative;flex-shrink:0;}
+.nb svg{width:16px;height:16px;stroke:rgba(168,194,153,0.38);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.15s;}
+.nb:hover{background:rgba(255,255,255,0.07);}
+.nb:hover svg,.nb.active svg{stroke:#fff;}
+.nb.active{background:rgba(255,255,255,0.1);}
+.nb-tip{position:absolute;left:44px;background:var(--ink);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.12s;z-index:900;}
+.nb:hover .nb-tip{opacity:1;}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+
+/* ── HEADER ── */
+.hdr{padding:0.75rem 1.5rem;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hdr-l{display:flex;align-items:baseline;gap:10px;}
+.hdr-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:500;letter-spacing:0.02em;text-transform:uppercase;color:var(--ink);line-height:1;}
+.hdr-date{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--ink3);letter-spacing:0.06em;text-transform:uppercase;}
+.hdr-geo{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink3);letter-spacing:0.06em;cursor:pointer;user-select:none;}
+.hdr-geo svg{width:9px;height:9px;stroke:var(--sage);fill:none;stroke-width:1.5;}
+.geo-dot{width:5px;height:5px;border-radius:50%;background:var(--sage);flex-shrink:0;animation:pulse 2.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+
+/* ── SECTIONS ── */
+.sec{display:none;flex:1;overflow:hidden;flex-direction:column;}
+.sec.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sec-inner{flex:1;overflow-y:auto;padding:1rem 1.5rem;}
+.sec-inner::-webkit-scrollbar{width:4px;}
+.sec-inner::-webkit-scrollbar-track{background:transparent;}
+.sec-inner::-webkit-scrollbar-thumb{background:rgba(28,28,23,0.12);border-radius:2px;}
+
+/* ── STICKY BOTTOM BAR ── */
+.sticky-bar{
+  position:relative;
+  background:var(--moss2);
+  border-top:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+  z-index:200;
+  overflow:hidden;
+  transition:max-height 0.32s cubic-bezier(.25,.46,.45,.94);
+}
+.sticky-collapsed{max-height:var(--sticky-h);}
+.sticky-expanded{max-height:420px;}
+.sticky-compact{display:flex;align-items:center;gap:0;height:var(--sticky-h);padding:0 16px;cursor:pointer;user-select:none;}
+.sticky-compact:hover .sticky-pill{opacity:1;}
+.sticky-pill{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;border:1px solid rgba(168,194,153,0.18);background:rgba(255,255,255,0.04);margin-right:10px;transition:opacity 0.12s;}
+.sticky-pill-ico{width:14px;height:14px;display:flex;align-items:center;justify-content:center;}
+.sticky-pill-ico svg{width:13px;height:13px;stroke:var(--sage-lt);fill:none;stroke-width:1.4;stroke-linecap:round;}
+.sticky-pill-val{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:400;color:#fff;letter-spacing:0.02em;white-space:nowrap;}
+.sticky-pill-sub{font-family:'Barlow Condensed',sans-serif;font-size:9px;color:rgba(168,194,153,0.5);text-transform:uppercase;letter-spacing:0.08em;margin-left:3px;}
+.sticky-divider{width:1px;height:22px;background:rgba(255,255,255,0.08);margin:0 8px;flex-shrink:0;}
+.sticky-expand-hint{margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:rgba(168,194,153,0.35);display:flex;align-items:center;gap:4px;}
+.sticky-expand-hint svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;transition:transform 0.25s;}
+.sticky-expanded .sticky-expand-hint svg{transform:rotate(180deg);}
+
+.sticky-detail{display:none;padding:0 16px 16px;animation:fadeUp 0.22s ease both;}
+.sticky-expanded .sticky-detail{display:flex;gap:16px;}
+
+.sticky-detail-panel{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:10px 12px;overflow:hidden;}
+.sdp-title{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:rgba(168,194,153,0.5);margin-bottom:8px;}
+.sdp-forecast{display:flex;gap:4px;}
+.sdp-fd{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.05);border-radius:3px;padding:5px 3px;text-align:center;}
+.sdp-dow{font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(168,194,153,0.45);margin-bottom:2px;}
+.sdp-ico svg{width:12px;height:12px;stroke:rgba(255,255,255,0.45);fill:none;stroke-width:1.5;stroke-linecap:round;}
+.sdp-t{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:300;color:#fff;margin-top:1px;}
+.sdp-r{font-family:'Barlow Condensed',sans-serif;font-size:9px;color:rgba(90,143,200,0.65);margin-top:1px;}
+.sdp-rec{font-size:11px;color:rgba(168,194,153,0.7);line-height:1.55;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);}
+
+.sdp-moon-strip{display:flex;gap:3px;margin-bottom:8px;}
+.sdp-mp{flex:1;background:rgba(255,255,255,0.04);border-radius:3px;padding:4px 2px;text-align:center;border:1px solid rgba(255,255,255,0.05);}
+.sdp-mp.tp{background:rgba(51,77,40,0.3);border-color:rgba(107,143,94,0.3);}
+.sdp-mpd{font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;color:rgba(168,194,153,0.45);letter-spacing:0.04em;}
+.sdp-mp.tp .sdp-mpd{color:var(--sage-lt);}
+.sdp-mpm{display:flex;justify-content:center;margin:2px 0;}
+.sdp-mpm svg{width:12px;height:12px;fill:none;stroke:rgba(168,194,153,0.5);stroke-width:1.2;}
+.sdp-mp.tp .sdp-mpm svg{stroke:var(--sage-lt);}
+.sdp-mpn{font-family:'Barlow Condensed',sans-serif;font-size:8px;text-transform:uppercase;color:rgba(168,194,153,0.4);}
+.sdp-mp.tp .sdp-mpn{color:rgba(168,194,153,0.7);}
+.sdp-moon-rec{font-size:11px;color:rgba(168,194,153,0.7);line-height:1.55;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);}
+
+/* ── 3-COLUMN PANEL (Inventario + Cal + Tareas) ── */
+.panel3{flex:1;display:grid;grid-template-columns:1fr 280px 1fr;gap:0;overflow:hidden;border-top:1px solid var(--rule);}
+.col{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--rule);}
+.col:last-child{border-right:none;}
+.col-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--rule);flex-shrink:0;}
+.col-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink);}
+.col-body{flex:1;overflow-y:auto;padding:10px 12px;}
+.col-body::-webkit-scrollbar{width:3px;}
+.col-body::-webkit-scrollbar-thumb{background:rgba(28,28,23,0.12);border-radius:2px;}
+
+/* ── INVENTORY CARDS ── */
+.pcard{background:var(--sf);border:1px solid var(--rule);border-radius:4px;margin-bottom:6px;overflow:hidden;cursor:pointer;transition:background 0.15s;}
+.pcard:hover{background:var(--bg);}
+.pcard-inner{display:flex;gap:0;}
+.pcard-photo{width:64px;height:64px;background:var(--sf2);flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--rule);overflow:hidden;}
+.pcard-photo img{width:100%;height:100%;object-fit:cover;}
+.pcard-photo svg{width:22px;height:22px;stroke:var(--ink3);fill:none;stroke-width:1;stroke-linecap:round;opacity:0.45;}
+.pcard-info{padding:7px 9px;flex:1;min-width:0;}
+.pcard-name{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:0.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcard-sp{font-size:10px;color:var(--sage);font-style:italic;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcard-tags{display:flex;gap:3px;flex-wrap:wrap;}
+.ptag{font-size:9px;font-family:'Barlow Condensed',sans-serif;padding:1px 5px;border-radius:2px;background:rgba(51,77,40,0.08);color:var(--moss);letter-spacing:0.04em;text-transform:uppercase;font-weight:500;}
+.ptag-w{background:var(--red-lt);color:var(--red);}
+.ptag-loc{background:rgba(30,74,110,0.09);color:var(--info);}
+.treat-badge{font-size:8px;font-family:'Barlow Condensed',sans-serif;background:var(--red-lt);color:var(--red);border:1px solid rgba(139,32,32,0.2);padding:1px 5px;border-radius:2px;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;}
+.add-pcard{border:1px dashed var(--rule2);border-radius:4px;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink3);transition:all 0.15s;}
+.add-pcard:hover{background:var(--sf);color:var(--moss);border-color:var(--sage);}
+.add-pcard svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;}
+
+/* retired section */
+.retired-toggle{display:flex;align-items:center;gap:6px;padding:6px 0;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink3);border-top:1px solid var(--rule);margin-top:6px;user-select:none;}
+.retired-toggle svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;transition:transform 0.2s;}
+.retired-toggle.open svg{transform:rotate(90deg);}
+#retiredList{display:none;}
+#retiredList.open{display:block;}
+.pcard-retired{opacity:0.6;border-style:dashed;}
+.pcard-retired .pcard-info{background:rgba(139,32,32,0.03);}
+.pcard-retired-meta{display:flex;gap:5px;margin-top:3px;font-size:9px;color:var(--red);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.04em;}
+
+/* ── SUPPLIES INVENTORY ── */
+.supply-item{background:var(--sf);border:1px solid var(--rule);border-radius:3px;padding:8px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px;}
+.supply-name{flex:1;font-size:12px;font-weight:500;color:var(--ink);}
+.supply-stock{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--ink2);display:flex;align-items:center;gap:4px;}
+.supply-badge{font-family:'Barlow Condensed',sans-serif;font-size:9px;padding:1px 6px;border-radius:2px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;}
+.sb-ok{background:rgba(51,77,40,0.1);color:var(--moss);}
+.sb-low{background:var(--amber-bg);color:var(--amber);}
+.sb-out{background:var(--red-lt);color:var(--red);}
+.supply-reminder{font-size:10px;color:var(--warn);font-style:italic;}
+.add-supply{border:1px dashed var(--rule2);border-radius:3px;padding:8px 10px;display:flex;align-items:center;gap:6px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink3);transition:all 0.15s;margin-top:4px;}
+.add-supply:hover{background:var(--sf);color:var(--moss);border-color:var(--sage);}
+.add-supply svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;}
+.supply-edit-row{display:grid;grid-template-columns:1fr auto auto auto;gap:5px;align-items:center;background:rgba(51,77,40,0.06);border:1px solid rgba(51,77,40,0.15);border-radius:3px;padding:6px 8px;margin-bottom:5px;}
+.supply-edit-row input{padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;}
+.supply-edit-row input:focus{border-color:var(--sage);}
+.supply-edit-row select{padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;}
+.supply-section-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 0 4px;}
+.supply-section-title{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink3);}
+.shopping-list{margin-top:6px;}
+.shop-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:3px;background:var(--warn-bg);border-left:2px solid var(--warn);margin-bottom:4px;font-size:11px;color:var(--warn);}
+.shop-item svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;flex-shrink:0;}
+
+/* ── CALENDAR COLUMN ── */
+.cal-mo{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);}
+.cal-nav-g{display:flex;gap:3px;}
+.cal-nav-g button{width:22px;height:22px;border:1px solid var(--rule2);border-radius:2px;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink3);transition:background 0.12s;}
+.cal-nav-g button:hover{background:var(--sf);}
+.cal-nav-g button svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+.cal-dlbls{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px;}
+.cal-dlbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;color:var(--ink3);text-align:center;padding:2px 0;letter-spacing:0.04em;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+.cd{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--ink3);border-radius:2px;cursor:pointer;transition:background 0.1s;position:relative;}
+.cd:hover{background:var(--sf2);}
+.cd.today{background:var(--moss);color:#fff;font-weight:600;}
+.cd.has-task{background:rgba(51,77,40,0.1);color:var(--moss);font-weight:500;}
+.cd.overdue{background:var(--amber-bg);color:var(--amber);}
+.cd.today.has-task{background:var(--moss);color:#fff;}
+.cd.today.overdue{background:#b85c00;color:#fff;}
+.cd-dot{width:3px;height:3px;border-radius:50%;background:var(--sage);position:absolute;bottom:2px;left:50%;transform:translateX(-50%);}
+.cd.today .cd-dot{background:rgba(255,255,255,0.6);}
+.cd.overdue .cd-dot{background:var(--warn);}
+.moon-mark{font-size:6px;position:absolute;top:1px;right:1px;opacity:0.35;}
+.cal-legend{display:flex;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--rule);}
+.leg-item{display:flex;align-items:center;gap:4px;font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3);}
+.leg-dot{width:8px;height:8px;border-radius:2px;}
+.leg-today{background:var(--moss);}
+.leg-task{background:rgba(51,77,40,0.15);}
+.leg-over{background:var(--amber-bg);border:1px solid rgba(122,80,32,0.3);}
+
+/* ── TASK LIST COLUMN ── */
+.task-card{background:var(--sf);border:1px solid var(--rule);border-radius:3px;padding:8px 10px;margin-bottom:5px;display:flex;align-items:flex-start;gap:8px;transition:background 0.15s;}
+.task-card:hover{background:var(--bg);}
+.task-card.overdue-task{border-left:2px solid var(--warn);background:var(--amber-bg);}
+.tcb{width:15px;height:15px;border-radius:2px;border:1px solid var(--rule2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all 0.12s;}
+.tcb svg{width:8px;height:8px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;opacity:0;}
+.tcb.done{background:var(--sage);border-color:var(--sage);}
+.tcb.done svg{opacity:1;}
+.task-body{flex:1;min-width:0;}
+.task-nm{font-size:12px;font-weight:500;color:var(--ink);line-height:1.3;}
+.task-nm.done{text-decoration:line-through;color:var(--ink3);font-weight:400;}
+.task-meta{font-size:10px;color:var(--ink3);margin-top:2px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.tbadge{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:1px 5px;border-radius:2px;}
+.tb-r{background:rgba(30,74,110,0.1);color:var(--info);}
+.tb-a{background:rgba(122,80,32,0.1);color:var(--warn);}
+.tb-p{background:rgba(51,77,40,0.1);color:var(--moss);}
+.tb-t{background:var(--red-lt);color:var(--red);}
+.tb-o{background:rgba(28,28,23,0.07);color:var(--ink2);}
+.overdue-label{font-family:'Barlow Condensed',sans-serif;font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 5px;border-radius:2px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;}
+.alarm-btn{width:18px;height:18px;border:none;background:none;cursor:pointer;color:var(--ink3);display:flex;align-items:center;justify-content:center;border-radius:2px;flex-shrink:0;padding:0;transition:color 0.12s;}
+.alarm-btn.set{color:var(--amber);}
+.alarm-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;}
+.alarm-btn:hover{color:var(--warn);}
+.del-btn{width:18px;height:18px;border:none;background:none;cursor:pointer;color:var(--ink3);display:flex;align-items:center;justify-content:center;border-radius:2px;flex-shrink:0;padding:0;transition:color 0.12s;}
+.del-btn:hover{color:var(--red);}
+.del-btn svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+
+/* ── MODALS ── */
+.modal-bg{position:fixed;inset:0;background:rgba(28,28,23,0.52);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:1.5rem 1rem;overflow-y:auto;backdrop-filter:blur(3px);}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg);border-radius:5px;width:min(580px,98vw);border:1px solid var(--rule2);box-shadow:0 20px 60px rgba(28,28,23,0.2);animation:fadeUp 0.22s ease both;margin:auto;}
+.mhdr{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.25rem;border-bottom:1px solid var(--rule);}
+.mtitle{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink);}
+.mclose{width:26px;height:26px;border-radius:3px;border:1px solid var(--rule2);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink3);transition:background 0.12s;}
+.mclose:hover{background:var(--sf);}
+.mclose svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+.mbody{padding:1rem 1.25rem;max-height:calc(100vh - 200px);overflow-y:auto;}
+.mbody::-webkit-scrollbar{width:3px;}
+.mbody::-webkit-scrollbar-thumb{background:rgba(28,28,23,0.12);border-radius:2px;}
+.mfoot{padding:0.75rem 1.25rem;border-top:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;}
+.mfoot-r{display:flex;gap:7px;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.fld{margin-bottom:9px;}
+.fld label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink3);font-weight:500;margin-bottom:3px;}
+.fld input,.fld select,.fld textarea{width:100%;padding:7px 10px;font-size:13px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;transition:border-color 0.15s;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--sage);}
+.fld textarea{resize:vertical;min-height:56px;line-height:1.5;}
+
+/* modal photo */
+.mph{height:120px;background:var(--sf);border-radius:3px;border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden;}
+.mph img{width:100%;height:100%;object-fit:cover;}
+.mph-ph{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.mph-ph svg{width:20px;height:20px;stroke:var(--ink3);fill:none;stroke-width:1;stroke-linecap:round;opacity:0.5;}
+.mph-ph span{font-family:'Barlow Condensed',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);}
+.mph-input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+
+/* treat toggle */
+.treat-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);cursor:pointer;transition:background 0.15s;margin-bottom:9px;}
+.treat-row:hover{background:var(--bg);}
+.treat-row input[type=checkbox]{width:14px;height:14px;accent-color:var(--red);cursor:pointer;flex-shrink:0;}
+.treat-row-lbl{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);display:flex;align-items:center;gap:5px;}
+.treat-row-lbl svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;}
+.treat-body{display:none;margin-bottom:9px;}
+.treat-body.open{display:block;}
+
+/* ── DRUM SCROLL WATER SELECTOR ── */
+.drum-wrap{position:relative;height:100px;overflow:hidden;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);user-select:none;}
+.drum-track{position:absolute;width:100%;transition:transform 0.2s cubic-bezier(.25,.46,.45,.94);}
+.drum-item{height:33px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:400;color:var(--ink3);letter-spacing:0.04em;cursor:pointer;transition:color 0.15s,font-weight 0.15s;}
+.drum-item.sel{color:var(--ink);font-weight:600;}
+.drum-overlay{position:absolute;inset:0;pointer-events:none;}
+.drum-overlay::before,.drum-overlay::after{content:'';position:absolute;left:0;right:0;height:33px;z-index:1;}
+.drum-overlay::before{top:0;background:linear-gradient(to bottom,var(--sf),rgba(235,232,225,0));}
+.drum-overlay::after{bottom:0;background:linear-gradient(to top,var(--sf),rgba(235,232,225,0));}
+.drum-sel-line{position:absolute;left:8px;right:8px;height:33px;top:33px;border-top:1px solid var(--rule2);border-bottom:1px solid var(--rule2);pointer-events:none;z-index:2;}
+.drum-arrows{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:absolute;right:8px;top:0;bottom:0;z-index:3;}
+.drum-arrows button{width:20px;height:20px;border:none;background:none;cursor:pointer;color:var(--ink3);display:flex;align-items:center;justify-content:center;transition:color 0.12s;padding:0;}
+.drum-arrows button:hover{color:var(--moss);}
+.drum-arrows button svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+
+/* ── ACTIVITY PANEL (inside plant modal) ── */
+.ac-panel{border:1px solid var(--rule);border-radius:3px;background:var(--sf);overflow:hidden;}
+.ac-phdr{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--rule);}
+.ac-pmo{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;}
+.ac-nav2{display:flex;gap:2px;}
+.ac-nav2 button{width:20px;height:20px;border:1px solid var(--rule2);border-radius:2px;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink3);}
+.ac-nav2 button:hover{background:var(--bg);}
+.ac-nav2 button svg{width:9px;height:9px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+.ac-pgrid-wrap{padding:6px 8px 4px;}
+.ac-dlbls{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px;}
+.ac-dlbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink3);text-align:center;padding:1px 0;}
+.ac-pgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+.acd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--ink3);border-radius:2px;cursor:pointer;transition:background 0.1s;position:relative;}
+.acd:hover{background:var(--sf2);}
+.acd.acd-today{background:var(--moss);color:#fff;font-weight:600;}
+.acd.acd-ev{background:rgba(51,77,40,0.1);color:var(--moss);font-weight:500;}
+.acd .acd-dot{width:3px;height:3px;border-radius:50%;background:var(--sage);position:absolute;bottom:1px;left:50%;transform:translateX(-50%);}
+.acd.acd-today .acd-dot{background:rgba(255,255,255,0.6);}
+
+/* add activity form */
+.ac-adder{padding:8px 10px;border-top:1px solid var(--rule);}
+.ac-adder-title{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:7px;}
+.type-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;}
+.type-chip{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:20px;border:1px solid var(--rule2);background:var(--sf2);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink3);transition:all 0.15s;}
+.type-chip svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;}
+.type-chip:hover,.type-chip.active{border-color:var(--sage);background:rgba(51,77,40,0.1);color:var(--moss);}
+.type-chip.active-r{border-color:#1e4a6e;background:var(--info-bg);color:var(--info);}
+.type-chip.active-a{border-color:var(--warn);background:var(--warn-bg);color:var(--warn);}
+.type-chip.active-p{border-color:var(--sage);background:rgba(51,77,40,0.1);color:var(--moss);}
+.type-chip.active-t{border-color:var(--red);background:var(--red-lt);color:var(--red);}
+.type-chip.active-o{border-color:var(--ink3);background:rgba(28,28,23,0.06);color:var(--ink2);}
+.ac-adder-row{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;}
+.ac-adder-row input{padding:6px 9px;font-size:12px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;transition:border-color 0.15s;}
+.ac-adder-row input:focus{border-color:var(--sage);}
+.ac-adder-row input[type=date]{font-size:11px;padding:6px 7px;}
+.ac-evlist{padding:0 10px 8px;}
+.ac-evitem{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:2px;background:var(--sf2);margin-bottom:3px;font-size:11px;}
+.ac-evitem svg{width:10px;height:10px;fill:none;stroke-width:1.5;flex-shrink:0;stroke-linecap:round;}
+.ac-ev-txt{color:var(--ink2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ac-ev-dt{font-family:'Barlow Condensed',sans-serif;font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}
+.ac-ev-del{width:14px;height:14px;border:none;background:none;cursor:pointer;color:var(--ink3);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;}
+.ac-ev-del:hover{color:var(--red);}
+.ac-ev-del svg{width:9px;height:9px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+.ac-noev{font-size:11px;color:var(--ink3);font-style:italic;padding:4px 10px 8px;}
+
+/* ── BUTTONS ── */
+.btn{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;}
+.btn svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.btn-primary{background:var(--moss);color:#fff;border:1px solid var(--moss);padding:7px 14px;}
+.btn-primary:hover{background:var(--moss2);}
+.btn-ghost{background:none;border:1px solid var(--rule2);padding:6px 13px;color:var(--ink2);}
+.btn-ghost:hover{background:var(--sf);border-color:var(--sage);color:var(--moss);}
+.btn-danger{background:none;border:1px solid rgba(139,32,32,0.3);padding:6px 13px;color:var(--red);}
+.btn-danger:hover{background:var(--red-lt);}
+.btn-warn{background:none;border:1px solid rgba(122,80,32,0.3);padding:6px 13px;color:var(--warn);}
+.btn-warn:hover{background:var(--warn-bg);}
+.btn-sm{padding:5px 10px;font-size:10px;}
+
+/* task modal */
+.task-modal-sm{width:min(400px,98vw);}
+
+.spin{display:inline-block;width:12px;height:12px;border:1.5px solid rgba(107,143,94,0.25);border-top-color:var(--sage);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* id panel in inventory tab */
+.id-bar{background:var(--moss2);border-radius:4px;padding:8px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.id-bar-l{flex:1;min-width:0;}
+.id-badge{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;background:rgba(107,143,94,0.2);color:var(--sage-lt);padding:2px 7px;border-radius:2px;display:inline-block;margin-bottom:4px;}
+.id-bar-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:500;color:#fff;text-transform:uppercase;letter-spacing:0.02em;}
+.id-bar-sub{font-size:11px;color:rgba(168,194,153,0.55);line-height:1.4;}
+.upload-btn{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(168,194,153,0.2);border-radius:3px;padding:7px 12px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--sage-lt);flex-shrink:0;transition:all 0.15s;white-space:nowrap;}
+.upload-btn:hover{background:rgba(255,255,255,0.12);}
+.upload-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;}
+.res-box{background:rgba(107,143,94,0.1);border-radius:3px;border:1px solid rgba(107,143,94,0.25);padding:8px 10px;margin-top:6px;display:none;}
+.res-name{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:500;color:#fff;text-transform:uppercase;margin-bottom:2px;}
+.res-detail{font-size:10px;color:var(--sage-lt);letter-spacing:0.04em;}
+.res-care{font-size:10px;color:rgba(168,194,153,0.55);margin-top:3px;line-height:1.4;}
+.res-acts{display:flex;gap:6px;margin-top:7px;}
+
+/* section tabs */
+.inv-tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:8px;}
+.inv-tab{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:5px 10px;cursor:pointer;border-bottom:2px solid transparent;color:var(--ink3);margin-bottom:-1px;transition:all 0.15s;}
+.inv-tab.active{color:var(--moss);border-bottom-color:var(--sage);}
+.inv-tab-panel{display:none;}
+.inv-tab-panel.active{display:block;}
+
+@media(max-width:900px){
+  .panel3{grid-template-columns:1fr;overflow-y:auto;}
+  .col{border-right:none;border-bottom:1px solid var(--rule);}
+  .sticky-detail{flex-direction:column;}
+}
+</style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e3017">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Jardín">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+</head>
+<body>
+
+<!-- SVG SYMBOLS -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="s-logo"    viewBox="0 0 24 24"><path d="M12 22V12"/><path d="M7 7c0 0 .5 5 5 5s5-5 5-5-2.5-5-5-5S7 7 7 7z"/></symbol>
+<symbol id="s-grid"    viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="s-weather" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+<symbol id="s-sun"     viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+<symbol id="s-cloud"   viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 104 16h14a4 4 0 000-8z"/></symbol>
+<symbol id="s-cs"      viewBox="0 0 24 24"><path d="M12 2v2M4.93 4.93l1.41 1.41M2 12h2"/><path d="M15 6.34A6 6 0 119.7 14H17a4 4 0 00-2-7.66z"/></symbol>
+<symbol id="s-rain"    viewBox="0 0 24 24"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0018 7h-1.26A8 8 0 104 15.25"/></symbol>
+<symbol id="s-drop"    viewBox="0 0 24 24"><path d="M12 2L5 12a7 7 0 0014 0L12 2z"/></symbol>
+<symbol id="s-leaf"    viewBox="0 0 24 24"><path d="M2 22c0 0 8-2 12-8s4-14 4-14-10 0-14 8-2 14-2 14z"/><line x1="2" y1="22" x2="12" y2="12"/></symbol>
+<symbol id="s-moon"    viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></symbol>
+<symbol id="s-cut"     viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></symbol>
+<symbol id="s-sprout"  viewBox="0 0 24 24"><path d="M7 20h10M10 20c5.5-2.5 2.5-7.5 2-9"/><path d="M9 9C9 4.5 14 4.5 14 9c0 0 5 2 0 6-1 1-3 2-4 2-1 0-3-1-4-2-5-4 0-6 0-6"/></symbol>
+<symbol id="s-flask"   viewBox="0 0 24 24"><path d="M6 2v6l-2 2a7 7 0 0012 0l-2-2V2"/><path d="M6 2h12"/></symbol>
+<symbol id="s-eye"     viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="s-ok"      viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></symbol>
+<symbol id="s-info"    viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+<symbol id="s-cam"     viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="s-edit"    viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+<symbol id="s-del"     viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></symbol>
+<symbol id="s-cal"     viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+<symbol id="s-bell"    viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></symbol>
+<symbol id="s-bell-off" viewBox="0 0 24 24"><path d="M13.73 21a2 2 0 01-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0118 8"/><path d="M6.26 6.26A5.86 5.86 0 006 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 00-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+<symbol id="s-bug"     viewBox="0 0 24 24"><path d="M8 2l1.5 1.5M14.5 3.5L16 2"/><circle cx="12" cy="8" r="3"/><path d="M12 11v10M8 16H3M21 16h-5"/><path d="M8 21H5a2 2 0 01-2-2v-2a4 4 0 014-4h10a4 4 0 014 4v2a2 2 0 01-2 2h-3"/></symbol>
+<symbol id="s-x"       viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+<symbol id="s-plus"    viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+<symbol id="s-prev"    viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+<symbol id="s-next"    viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+<symbol id="s-pin"     viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="s-therm"   viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></symbol>
+<symbol id="s-harvest" viewBox="0 0 24 24"><path d="M12 2a9 9 0 000 18"/><path d="M3 12h18"/><path d="M12 2a15 15 0 010 18"/></symbol>
+<symbol id="s-soil"    viewBox="0 0 24 24"><path d="M12 22V12"/><path d="M5 3c0 4 2 6 7 6s7-3 7-7"/></symbol>
+<symbol id="s-up"      viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></symbol>
+<symbol id="s-dn"      viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+<symbol id="s-box"     viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+<symbol id="s-archive" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></symbol>
+<symbol id="s-shop"    viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></symbol>
+<symbol id="s-plant"   viewBox="0 0 24 24"><path d="M12 22V12"/><path d="M5 9c0 0 1 4 7 4s7-4 7-4-1-7-7-7S5 9 5 9z"/></symbol>
+</svg>
+
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="s-logo"><svg width="11" height="11" fill="none" stroke="var(--sage-lt)" stroke-width="1.5"><use href="#s-logo"/></svg></div>
+  <button class="nb active" onclick="nav('work',this)" title="Inventario y Tareas"><svg><use href="#s-grid"/></svg><span class="nb-tip">Inventario &amp; Tareas</span></button>
+  <button class="nb" onclick="nav('archive',this)" title="Archivo"><svg><use href="#s-archive"/></svg><span class="nb-tip">Plantas dadas de baja</span></button>
+</aside>
+
+<div class="main">
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-title">Ayudante de Jardinería</div>
+    <div class="hdr-date" id="hdrDate"></div>
+  </div>
+  <div class="hdr-geo" onclick="requestGeo()">
+    <div class="geo-dot"></div>
+    <svg viewBox="0 0 24 24" width="9" height="9"><use href="#s-pin"/></svg>
+    <span id="geoLabel">Obteniendo ubicación...</span>
+  </div>
+</header>
+
+<!-- ── INVENTARIO + CALENDARIO + TAREAS ── -->
+<div id="sec-work" class="sec active" style="overflow:hidden;">
+  <div class="panel3" style="flex:1;overflow:hidden;">
+
+    <!-- COL 1: INVENTARIO -->
+    <div class="col">
+      <div class="col-hdr">
+        <span class="col-title">Inventario</span>
+        <button class="btn btn-primary btn-sm" onclick="openNewPlant()"><svg><use href="#s-plus"/></svg>Nueva</button>
+      </div>
+      <div class="col-body">
+        <!-- tabs -->
+        <div class="inv-tabs">
+          <div class="inv-tab active" onclick="switchInvTab('plantas',this)">Plantas</div>
+          <div class="inv-tab" onclick="switchInvTab('insumos',this)">Insumos</div>
+        </div>
+
+        <!-- TAB PLANTAS -->
+        <div class="inv-tab-panel active" id="tab-plantas">
+          <!-- ID BAR -->
+          <div class="id-bar">
+            <div class="id-bar-l">
+              <div class="id-badge">IA</div>
+              <div class="id-bar-title">Identificar especie</div>
+              <div class="id-bar-sub">Fotografiá la planta para crear la ficha automáticamente.</div>
+            </div>
+            <div>
+              <div class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                <svg><use href="#s-cam"/></svg>Foto
+              </div>
+              <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="identifyPlant(this)">
+            </div>
+          </div>
+          <div id="id-loading" style="display:none;align-items:center;gap:7px;padding:6px 0;font-family:'Barlow Condensed',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);"><span class="spin"></span>Analizando...</div>
+          <div class="res-box" id="resBox">
+            <div class="res-name" id="resName"></div>
+            <div class="res-detail" id="resDetail"></div>
+            <div class="res-care" id="resCare"></div>
+            <div class="res-acts">
+              <button class="btn btn-primary btn-sm" onclick="addFromIdentify()">Agregar</button>
+              <button class="btn btn-ghost btn-sm" onclick="closeRes()">Cancelar</button>
+            </div>
+          </div>
+          <div id="plantList"></div>
+          <div class="add-pcard" onclick="openNewPlant()"><svg><use href="#s-plus"/></svg>Agregar planta</div>
+        </div>
+
+        <!-- TAB INSUMOS -->
+        <div class="inv-tab-panel" id="tab-insumos">
+          <div class="supply-section-hdr">
+            <span class="supply-section-title">Insumos &amp; Stock</span>
+            <button class="btn btn-primary btn-sm" onclick="openAddSupply()"><svg><use href="#s-plus"/></svg>Nuevo</button>
+          </div>
+          <div id="supplyList"></div>
+          <div id="supplyAddRow" style="display:none;">
+            <div class="supply-edit-row">
+              <input type="text" id="sName" placeholder="Nombre del insumo...">
+              <input type="number" id="sQty" placeholder="Stock" min="0" style="width:70px;">
+              <select id="sUnit"><option>unidades</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>bolsas</option><option>litros</option></select>
+              <select id="sStatus"><option value="ok">OK</option><option value="low">Poco</option><option value="out">Sin stock</option></select>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              <input type="text" id="sReminder" placeholder="Recordatorio de compra (opcional)..." style="flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;">
+              <button class="btn btn-primary btn-sm" onclick="saveSupply()">Guardar</button>
+              <button class="btn btn-ghost btn-sm" onclick="cancelSupply()">Cancelar</button>
+            </div>
+          </div>
+          <!-- Shopping list -->
+          <div class="shopping-list" id="shoppingList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 2: CALENDARIO -->
+    <div class="col">
+      <div class="col-hdr">
+        <span class="col-title" id="calMonthTitle"></span>
+        <div class="cal-nav-g">
+          <button onclick="changeMonth(-1)"><svg width="10" height="10"><use href="#s-prev"/></svg></button>
+          <button onclick="changeMonth(1)"><svg width="10" height="10"><use href="#s-next"/></svg></button>
+        </div>
+      </div>
+      <div class="col-body">
+        <div class="cal-dlbls" id="calDLbls"></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend">
+          <div class="leg-item"><div class="leg-dot leg-today"></div>Hoy</div>
+          <div class="leg-item"><div class="leg-dot leg-task"></div>Con tareas</div>
+          <div class="leg-item"><div class="leg-dot leg-over"></div>Pendiente vencido</div>
+        </div>
+        <div id="dayPreview" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- COL 3: TAREAS -->
+    <div class="col">
+      <div class="col-hdr">
+        <span class="col-title">Tareas</span>
+        <button class="btn btn-primary btn-sm" onclick="openAddTask()"><svg><use href="#s-plus"/></svg>Nueva</button>
+      </div>
+      <div class="col-body">
+        <div id="taskList"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── STICKY BOTTOM BAR ── -->
+  <div class="sticky-bar sticky-collapsed" id="stickyBar" onclick="toggleSticky()">
+    <div class="sticky-compact">
+      <div class="sticky-pill">
+        <div class="sticky-pill-ico"><svg><use href="#s-therm"/></svg></div>
+        <div class="sticky-pill-val" id="stTemp">--°C</div>
+        <div class="sticky-pill-sub" id="stCond">—</div>
+      </div>
+      <div class="sticky-divider"></div>
+      <div class="sticky-pill">
+        <div class="sticky-pill-ico"><svg><use href="#s-moon"/></svg></div>
+        <div class="sticky-pill-val" id="stMoon">—</div>
+        <div class="sticky-pill-sub" id="stMoonSub"></div>
+      </div>
+      <div class="sticky-expand-hint">
+        <span>Detalle</span>
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div class="sticky-detail" id="stickyDetail">
+      <div class="sticky-detail-panel">
+        <div class="sdp-title">Pronóstico 5 días</div>
+        <div class="sdp-forecast" id="sdpForecast"></div>
+        <div class="sdp-rec" id="sdpWeatherRec"></div>
+      </div>
+      <div class="sticky-detail-panel">
+        <div class="sdp-title">Evolución lunar</div>
+        <div class="sdp-moon-strip" id="sdpMoonStrip"></div>
+        <div class="sdp-moon-rec" id="sdpMoonRec"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ARCHIVO: PLANTAS DADAS DE BAJA ── -->
+<div id="sec-archive" class="sec" style="flex-direction:column;overflow:hidden;">
+  <div class="sec-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink);">Repositorio de bajas</div>
+        <div style="font-size:11px;color:var(--ink3);margin-top:2px;">Plantas que dejaron el inventario activo.</div>
+      </div>
+    </div>
+    <div id="archiveList"></div>
+    <div id="archiveEmpty" style="display:none;padding:2rem 0;text-align:center;font-size:12px;color:var(--ink3);font-style:italic;">No hay plantas dadas de baja todavía.</div>
+  </div>
+  <div class="sticky-bar sticky-collapsed" id="stickyBar2" onclick="toggleSticky2()" style="cursor:pointer;">
+    <div class="sticky-compact">
+      <div class="sticky-pill">
+        <div class="sticky-pill-ico"><svg><use href="#s-therm"/></svg></div>
+        <div class="sticky-pill-val" id="stTemp2">--°C</div>
+        <div class="sticky-pill-sub" id="stCond2">—</div>
+      </div>
+      <div class="sticky-divider"></div>
+      <div class="sticky-pill">
+        <div class="sticky-pill-ico"><svg><use href="#s-moon"/></svg></div>
+        <div class="sticky-pill-val" id="stMoon2">—</div>
+        <div class="sticky-pill-sub" id="stMoonSub2"></div>
+      </div>
+      <div class="sticky-expand-hint">
+        <span>Detalle</span>
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div class="sticky-detail" id="stickyDetail2">
+      <div class="sticky-detail-panel">
+        <div class="sdp-title">Pronóstico 5 días</div>
+        <div class="sdp-forecast" id="sdpForecast2"></div>
+        <div class="sdp-rec" id="sdpWeatherRec2"></div>
+      </div>
+      <div class="sticky-detail-panel">
+        <div class="sdp-title">Evolución lunar</div>
+        <div class="sdp-moon-strip" id="sdpMoonStrip2"></div>
+        <div class="sdp-moon-rec" id="sdpMoonRec2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- .main -->
+</div><!-- .app -->
+
+<!-- PLANT MODAL -->
+<div class="modal-bg" id="plantModal">
+  <div class="modal">
+    <div class="mhdr">
+      <div class="mtitle" id="mPlantTitle">Nueva planta</div>
+      <button class="mclose" onclick="closePlantModal()"><svg><use href="#s-x"/></svg></button>
+    </div>
+    <div class="mbody">
+      <!-- Photo -->
+      <div class="mph" onclick="document.getElementById('mPhotoIn').click()" id="mPhotoZone">
+        <div class="mph-ph" id="mPhotoPh"><svg width="20" height="20"><use href="#s-cam"/></svg><span>Agregar foto</span></div>
+        <img id="mPhotoImg" src="" style="display:none;">
+        <input type="file" id="mPhotoIn" accept="image/*" capture="environment" class="mph-input" onchange="handleMPhoto(this)">
+      </div>
+      <div class="f2">
+        <div class="fld"><label>Nombre / apodo</label><input type="text" id="f-name" placeholder="Ej: Pothos de la sala"></div>
+        <div class="fld"><label>Especie</label><input type="text" id="f-species" placeholder="Ej: Epipremnum aureum"></div>
+      </div>
+      <!-- DRUM WATER SELECTOR -->
+      <div class="fld">
+        <label>Frecuencia de riego</label>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;">
+          <div class="drum-wrap" id="drumWrap">
+            <div class="drum-track" id="drumTrack"></div>
+            <div class="drum-overlay"></div>
+            <div class="drum-sel-line"></div>
+            <div class="drum-arrows">
+              <button onclick="drumScroll(-1)"><svg width="12" height="12"><use href="#s-up"/></svg></button>
+              <button onclick="drumScroll(1)"><svg width="12" height="12"><use href="#s-dn"/></svg></button>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--ink3);min-width:50px;text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:300;color:var(--moss);line-height:1;" id="drumDaysNum">7</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;">días</div>
+          </div>
+        </div>
+      </div>
+      <div class="f2">
+        <div class="fld"><label>Ubicación</label>
+          <select id="f-loc"><option>Interior — luz indirecta</option><option>Interior — poca luz</option><option>Balcón — sol directo</option><option>Balcón — semisombra</option><option>Exterior — maceta</option><option>Jardín — a tierra</option><option>Otro</option></select>
+        </div>
+        <div class="fld"><label>Sustrato</label><input type="text" id="f-sustrato" placeholder="Ej: Universal + perlita"></div>
+      </div>
+      <div class="f2">
+        <div class="fld"><label>Última fertilización</label><input type="date" id="f-fert"></div>
+        <div class="fld"><label>Exposición a luz</label>
+          <select id="f-luz"><option>Alta — sol directo</option><option>Media — luz indirecta</option><option>Baja — poca luz</option></select>
+        </div>
+      </div>
+      <div class="fld"><label>Anotaciones</label><textarea id="f-notes" placeholder="Observaciones, historial, comportamiento..."></textarea></div>
+
+      <!-- EN TRATAMIENTO -->
+      <div class="treat-row" onclick="toggleTreat(event)">
+        <input type="checkbox" id="f-treat-cb" onclick="event.stopPropagation();toggleTreatDirect()">
+        <span class="treat-row-lbl"><svg><use href="#s-bug"/></svg>En tratamiento</span>
+      </div>
+      <div class="treat-body" id="treatBody">
+        <div class="f2">
+          <div class="fld"><label>Problema</label><input type="text" id="f-prob" placeholder="Ej: Cochinilla, hongos..."></div>
+          <div class="fld"><label>Tipo de tratamiento</label><input type="text" id="f-treat-type" placeholder="Ej: Neem semanal..."></div>
+        </div>
+        <div class="fld"><label>Notas del tratamiento</label><textarea id="f-treat-notes" placeholder="Inicio, dosis, evolución..."></textarea></div>
+      </div>
+
+      <!-- ACTIVIDADES -->
+      <div class="fld" style="margin-bottom:0;">
+        <label>Calendario de actividades</label>
+        <div class="ac-panel">
+          <div class="ac-phdr">
+            <div class="ac-pmo" id="acTitle"></div>
+            <div class="ac-nav2">
+              <button onclick="acPrev()"><svg width="9" height="9"><use href="#s-prev"/></svg></button>
+              <button onclick="acNext()"><svg width="9" height="9"><use href="#s-next"/></svg></button>
+            </div>
+          </div>
+          <div class="ac-pgrid-wrap">
+            <div class="ac-dlbls" id="acDLbls"></div>
+            <div class="ac-pgrid" id="acPGrid"></div>
+          </div>
+          <!-- ADDER -->
+          <div class="ac-adder">
+            <div class="ac-adder-title">Nueva actividad</div>
+            <div class="type-chips" id="typeChips"></div>
+            <div class="ac-adder-row">
+              <input type="text" id="evTxt" placeholder="Descripción breve..." onkeydown="if(event.key==='Enter')addEvt()">
+              <input type="date" id="evDate">
+              <button class="btn btn-primary btn-sm" onclick="addEvt()"><svg><use href="#s-plus"/></svg></button>
+            </div>
+          </div>
+          <div id="acEvList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-danger" id="mDeleteBtn" onclick="confirmRetirePlant()" style="display:none;"><svg><use href="#s-archive"/></svg>Dar de baja</button>
+        <button class="btn btn-danger" id="mHardDeleteBtn" onclick="hardDeletePlant()" style="display:none;font-size:9px;padding:5px 8px;opacity:0.6;" title="Eliminar permanentemente">×</button>
+      </div>
+      <div class="mfoot-r">
+        <button class="btn btn-ghost" onclick="closePlantModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="savePlant()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RETIRE MODAL -->
+<div class="modal-bg" id="retireModal">
+  <div class="modal" style="width:min(420px,98vw);">
+    <div class="mhdr">
+      <div class="mtitle">Dar de baja planta</div>
+      <button class="mclose" onclick="closeModal('retireModal')"><svg><use href="#s-x"/></svg></button>
+    </div>
+    <div class="mbody">
+      <div style="font-size:12px;color:var(--ink2);margin-bottom:12px;line-height:1.6;">La planta pasará al repositorio de bajas con la fecha y el motivo indicados.</div>
+      <div class="fld"><label>Motivo de baja</label>
+        <select id="retire-reason">
+          <option value="falta_riego">Falta de riego</option>
+          <option value="exceso_riego">Exceso de riego</option>
+          <option value="regalo">Regalo / donación</option>
+          <option value="enfermedad">Enfermedad o plaga</option>
+          <option value="clima">Efecto del clima</option>
+          <option value="fin_ciclo">Fin de ciclo natural</option>
+          <option value="trasplante">Trasplante externo</option>
+          <option value="otro">Otro motivo</option>
+        </select>
+      </div>
+      <div class="fld"><label>Notas adicionales (opcional)</label>
+        <textarea id="retire-notes" placeholder="Detalles, observaciones..." style="min-height:60px;"></textarea>
+      </div>
+    </div>
+    <div class="mfoot">
+      <div></div>
+      <div class="mfoot-r">
+        <button class="btn btn-ghost" onclick="closeModal('retireModal')">Cancelar</button>
+        <button class="btn btn-warn" onclick="executeRetire()"><svg><use href="#s-archive"/></svg>Confirmar baja</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-bg" id="taskModal">
+  <div class="modal task-modal-sm">
+    <div class="mhdr"><div class="mtitle">Nueva tarea</div><button class="mclose" onclick="closeModal('taskModal')"><svg><use href="#s-x"/></svg></button></div>
+    <div class="mbody">
+      <div class="fld"><label>Descripción</label><input type="text" id="t-name" placeholder="Ej: Regar todas las plantas"></div>
+      <div class="f2">
+        <div class="fld"><label>Tipo</label>
+          <select id="t-type"><option value="r">Riego</option><option value="a">Abono</option><option value="p">Poda / Limpieza</option><option value="t">Tratamiento</option><option value="o">Otro</option></select>
+        </div>
+        <div class="fld"><label>Fecha</label><input type="date" id="t-date"></div>
+      </div>
+      <div class="f2">
+        <div class="fld"><label>Planta / Ubicación</label><input type="text" id="t-plant" placeholder="Todas o nombre específico"></div>
+        <div class="fld"><label>Alarma</label>
+          <select id="t-alarm"><option value="">Sin alarma</option><option value="same">Mismo día 08:00</option><option value="1d">1 día antes</option><option value="2d">2 días antes</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot"><div></div>
+      <div class="mfoot-r">
+        <button class="btn btn-ghost" onclick="closeModal('taskModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveTask()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUPPLY EDIT MODAL -->
+<div class="modal-bg" id="supplyEditModal">
+  <div class="modal" style="width:min(400px,98vw);">
+    <div class="mhdr"><div class="mtitle">Editar insumo</div><button class="mclose" onclick="closeModal('supplyEditModal')"><svg><use href="#s-x"/></svg></button></div>
+    <div class="mbody">
+      <div class="fld"><label>Nombre</label><input type="text" id="se-name"></div>
+      <div class="f2">
+        <div class="fld"><label>Stock</label><input type="number" id="se-qty" min="0"></div>
+        <div class="fld"><label>Unidad</label>
+          <select id="se-unit"><option>unidades</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>bolsas</option><option>litros</option></select>
+        </div>
+      </div>
+      <div class="fld"><label>Estado</label>
+        <select id="se-status"><option value="ok">OK — stock suficiente</option><option value="low">Poco — comprar pronto</option><option value="out">Sin stock — comprar ya</option></select>
+      </div>
+      <div class="fld"><label>Recordatorio de compra</label><input type="text" id="se-reminder" placeholder="Ej: Comprar antes del riego del viernes"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-danger" onclick="deleteSupply()"><svg><use href="#s-del"/></svg>Eliminar</button>
+      <div class="mfoot-r">
+        <button class="btn btn-ghost" onclick="closeModal('supplyEditModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveSupplyEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── DATA ─── */
+function dStr(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+function sv(id,w,h,col){const c=col?`stroke="${col}"`:'';return `<svg width="${w||14}" height="${h||14}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ${c}><use href="#${id}"/></svg>`;}
+
+let plants=[
+  {id:1,name:'Pothos dorado',species:'Epipremnum aureum',waterDays:7,loc:'Interior — luz indirecta',sustrato:'Universal + perlita',fert:'',luz:'Media — luz indirecta',notes:'Muy resistente. Hojas variegadas.',treat:false,prob:'',treatType:'',treatNotes:'',photo:'',events:[]},
+  {id:2,name:'Suculenta rosa',species:'Echeveria elegans',waterDays:14,loc:'Balcón — sol directo',sustrato:'Sustrato cactáceas',fert:'',luz:'Alta — sol directo',notes:'No regar en exceso.',treat:false,prob:'',treatType:'',treatNotes:'',photo:'',events:[]},
+  {id:3,name:'Helecho boston',species:'Nephrolepis exaltata',waterDays:3,loc:'Interior — poca luz',sustrato:'Universal + turba',fert:'',luz:'Baja — poca luz',notes:'Le gusta la humedad ambiental.',treat:true,prob:'Cochinilla de raíz',treatType:'Neem semanal',treatNotes:'Inicio hace 2 semanas. Mejorando.',photo:'',events:[{date:dStr(2),txt:'Revisión raíces',type:'p'},{date:dStr(7),txt:'Aplicar neem',type:'t'}]}
+];
+let retiredPlants=[];
+let tasks=[
+  {id:1,name:'Regar todas las plantas',type:'r',date:dStr(0),plant:'Todas',done:false,alarm:''},
+  {id:2,name:'Fertilizar pothos',type:'a',date:dStr(7),plant:'Pothos dorado',done:false,alarm:'1d'},
+  {id:3,name:'Aplicar neem helecho',type:'t',date:dStr(-2),plant:'Helecho boston',done:false,alarm:'same'}
+];
+let supplies=[
+  {id:1,name:'Tierra universal',qty:5,unit:'kg',status:'ok',reminder:''},
+  {id:2,name:'Neem oil',qty:1,unit:'L',status:'low',reminder:'Comprar antes del próximo tratamiento'},
+  {id:3,name:'Fertilizante líquido',qty:0,unit:'unidades',status:'out',reminder:'Urgente para la próxima fertilización'},
+];
+let curM=new Date().getMonth(),curY=new Date().getFullYear();
+let acM=new Date().getMonth(),acY=new Date().getFullYear();
+let editingId=null,identifiedData=null;
+let acEvLocal=[];
+let evType='r';
+let currentMoonPhase='Luna nueva';
+let drumIdx=5;
+const DRUM_OPTIONS=[1,2,3,4,5,6,7,10,14,21,28,30,60];
+let editingSupplyId=null;
+let stickyOpen=false;
+let stickyOpen2=false;
+let weatherData=null;
+let retirePendingId=null;
+
+/* ─── HEADER ─── */
+(function(){
+  const now=new Date(),days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],mos=['enero','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  document.getElementById('hdrDate').textContent=`${days[now.getDay()]} ${now.getDate()} ${mos[now.getMonth()]} ${now.getFullYear()}`;
+})();
+
+/* ─── NAV ─── */
+function nav(id,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='work'){renderPlants();renderCal();renderTaskList();}
+  if(id==='archive'){renderArchive();}
+}
+
+/* ─── INV TABS ─── */
+function switchInvTab(tab,el){
+  document.querySelectorAll('.inv-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.inv-tab-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='insumos')renderSupplies();
+}
+
+/* ─── STICKY BAR ─── */
+function toggleSticky(){
+  stickyOpen=!stickyOpen;
+  const bar=document.getElementById('stickyBar');
+  bar.classList.toggle('sticky-collapsed',!stickyOpen);
+  bar.classList.toggle('sticky-expanded',stickyOpen);
+}
+function toggleSticky2(){
+  stickyOpen2=!stickyOpen2;
+  const bar=document.getElementById('stickyBar2');
+  bar.classList.toggle('sticky-collapsed',!stickyOpen2);
+  bar.classList.toggle('sticky-expanded',stickyOpen2);
+}
+function updateStickyBars(temp,cond,moonName,moonShort){
+  ['','2'].forEach(s=>{
+    const t=document.getElementById('stTemp'+s);
+    const c=document.getElementById('stCond'+s);
+    const m=document.getElementById('stMoon'+s);
+    const ms=document.getElementById('stMoonSub'+s);
+    if(t)t.textContent=temp+'°C';
+    if(c)c.textContent=cond;
+    if(m)m.textContent=moonName;
+    if(ms)ms.textContent=moonShort;
+  });
+}
+function renderStickyDetail(daily){
+  if(!daily)return;
+  const DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  let fc='';
+  for(let i=0;i<5;i++){
+    const dt=new Date(daily.time[i]+'T12:00:00');
+    fc+=`<div class="sdp-fd"><div class="sdp-dow">${i===0?'Hoy':DAYS[dt.getDay()]}</div><div class="sdp-ico">${sv(codeIco(daily.weathercode[i]||0),12,12)}</div><div class="sdp-t">${Math.round(daily.temperature_2m_max[i])}°</div><div class="sdp-r">${daily.precipitation_probability_max[i]||0}%</div></div>`;
+  }
+  ['','2'].forEach(s=>{
+    const el=document.getElementById('sdpForecast'+s);
+    if(el)el.innerHTML=fc;
+  });
+  // Weather recommendation
+  const tempMax=Math.round(daily.temperature_2m_max[0]);
+  const rain=daily.precipitation_probability_max[0]||0;
+  let rec='';
+  if(tempMax>32)rec='Temperatura muy alta. Regá temprano o a la tarde para evitar quemaduras y pérdida de agua por evaporación.';
+  else if(rain>60)rec='Alta probabilidad de lluvia. Podés omitir el riego hoy. Aprovechá para observar el drenaje de las macetas.';
+  else if(tempMax<10)rec='Día frío. Las plantas de interior no necesitan riego extra. Alejá las macetas de ventanas con corriente.';
+  else rec='Condiciones favorables. Buen día para regar, podar o revisar el estado general de las plantas.';
+  ['','2'].forEach(s=>{
+    const el=document.getElementById('sdpWeatherRec'+s);
+    if(el)el.textContent=rec;
+  });
+  renderStickyMoon();
+}
+function renderStickyMoon(){
+  const today=new Date();
+  const PILL_SVG={'Luna nueva':`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/></svg>`,'Cuarto creciente':`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18" fill="rgba(168,194,153,0.3)"/></svg>`,'Luna llena':`<svg width="12" height="12" viewBox="0 0 24 24" fill="rgba(168,194,153,0.3)" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/></svg>`,'Cuarto menguante':`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18" fill="rgba(168,194,153,0.3)"/></svg>`};
+  let strip='';
+  for(let i=0;i<7;i++){const d=new Date(today);d.setDate(d.getDate()+i);const p=getLunar(d);strip+=`<div class="sdp-mp ${i===0?'tp':''}"><div class="sdp-mpd">${d.getDate()}/${d.getMonth()+1}</div><div class="sdp-mpm">${PILL_SVG[p.name]}</div><div class="sdp-mpn">${p.short}</div></div>`;}
+  const ph=getLunar(today);
+  const moonRec=({'Luna nueva':'Momento ideal para plantar y trasplantar. La energía fluye hacia las raíces. Sembrá semillas y realizá divisiones de matas.','Cuarto creciente':'La savia asciende hacia hojas y tallos. Fertilizá para estimular crecimiento y realizá podas formativas.','Luna llena':'Máxima vitalidad y concentración de aceites esenciales. Cosechá hierbas aromáticas. Evitá trasplantar.','Cuarto menguante':'Fase de limpieza y control. Aplicá tratamientos contra plagas: el neem y el jabón potásico son más efectivos ahora.'})[ph.name]||'';
+  ['','2'].forEach(s=>{
+    const el=document.getElementById('sdpMoonStrip'+s);
+    if(el)el.innerHTML=strip;
+    const rel=document.getElementById('sdpMoonRec'+s);
+    if(rel)rel.textContent=moonRec;
+  });
+}
+
+/* ─── GEO + WEATHER ─── */
+function requestGeo(){
+  if(!navigator.geolocation){setGeoLabel('Sin gps');loadWeather(-34.6037,-58.3816);return;}
+  navigator.geolocation.getCurrentPosition(
+    p=>{loadWeather(p.coords.latitude,p.coords.longitude);revGeo(p.coords.latitude,p.coords.longitude);},
+    ()=>{loadWeather(-34.6037,-58.3816);setGeoLabel('Buenos Aires, AR');},
+    {timeout:8000}
+  );
+}
+function setGeoLabel(t){document.getElementById('geoLabel').textContent=t;}
+function revGeo(lat,lon){
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+    .then(r=>r.json()).then(d=>{
+      const c=d.address?.city||d.address?.town||d.address?.village||'';
+      const st=d.address?.state||'';
+      setGeoLabel(c+(st?', '+st.split(' ')[0]:''));
+    }).catch(()=>{});
+}
+function loadWeather(lat,lon){
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&daily=temperature_2m_max,precipitation_probability_max,weathercode&forecast_days=5&timezone=America%2FArgentina%2FBuenos_Aires`)
+    .then(r=>r.json()).then(d=>{
+      weatherData=d;
+      const c=d.current,daily=d.daily;
+      const temp=Math.round(c.temperature_2m*10)/10;
+      const cond=codeTxt(c.weathercode||0);
+      const ph=getLunar(new Date());
+      updateStickyBars(temp,cond.toUpperCase(),ph.short,ph.mark);
+      renderStickyDetail(daily);
+    }).catch(()=>{
+      const ph=getLunar(new Date());
+      updateStickyBars('--','—',ph.short,ph.mark);
+    });
+}
+function codeTxt(c){if(c===0)return'Despejado';if(c<=2)return'Parcialmente nublado';if(c<=3)return'Nublado';if(c<=48)return'Neblina';if(c<=67)return'Lluvia';if(c<=99)return'Tormenta';return'Variable';}
+function codeIco(c){if(c===0)return's-sun';if(c<=2)return's-cs';if(c<=3)return's-cloud';if(c<=99)return's-rain';return's-cloud';}
+requestGeo();
+
+/* ─── LUNAR ─── */
+function getLunar(d){const k=new Date(2000,0,6),diff=(d-k)/86400000,c=29.53,p=((diff%c)+c)%c;if(p<1.85)return{name:'Luna nueva',short:'Nueva',mark:'●'};if(p<7.38)return{name:'Cuarto creciente',short:'Crec.',mark:'◐'};if(p<14.77)return{name:'Luna llena',short:'Llena',mark:'○'};if(p<22.15)return{name:'Cuarto menguante',short:'Meng.',mark:'◑'};return{name:'Luna nueva',short:'Nueva',mark:'●'};}
+
+/* init lunar sticky */
+(function(){
+  const ph=getLunar(new Date());
+  currentMoonPhase=ph.name;
+  updateStickyBars('—','—',ph.short,ph.mark);
+  renderStickyMoon();
+})();
+
+/* ─── DRUM SCROLL ─── */
+const DRUM_LABELS=DRUM_OPTIONS.map(n=>n===1?'1 día':n+' días');
+function renderDrum(){
+  const track=document.getElementById('drumTrack');
+  let html='<div class="drum-item" style="height:33px;"></div>';
+  DRUM_LABELS.forEach((l,i)=>{html+=`<div class="drum-item ${i===drumIdx?'sel':''}" onclick="drumSetIdx(${i})">${l}</div>`;});
+  html+='<div class="drum-item" style="height:33px;"></div>';
+  track.innerHTML=html;
+  track.style.transform=`translateY(${-drumIdx*33}px)`;
+  document.getElementById('drumDaysNum').textContent=DRUM_OPTIONS[drumIdx];
+}
+function drumSetIdx(i){drumIdx=Math.max(0,Math.min(DRUM_OPTIONS.length-1,i));renderDrum();}
+function drumScroll(dir){drumSetIdx(drumIdx+dir);}
+function drumDaysToIdx(d){let best=0;DRUM_OPTIONS.forEach((v,i)=>{if(Math.abs(v-d)<Math.abs(DRUM_OPTIONS[best]-d))best=i;});return best;}
+let drumDragY=null,drumDragIdx=null;
+document.addEventListener('DOMContentLoaded',()=>{
+  const wrap=document.getElementById('drumWrap');
+  if(!wrap)return;
+  wrap.addEventListener('wheel',e=>{e.preventDefault();drumScroll(e.deltaY>0?1:-1);},{passive:false});
+  wrap.addEventListener('mousedown',e=>{drumDragY=e.clientY;drumDragIdx=drumIdx;});
+  document.addEventListener('mousemove',e=>{if(drumDragY===null)return;const delta=Math.round((drumDragY-e.clientY)/22);drumSetIdx(drumDragIdx+delta);});
+  document.addEventListener('mouseup',()=>{drumDragY=null;});
+  wrap.addEventListener('touchstart',e=>{drumDragY=e.touches[0].clientY;drumDragIdx=drumIdx;},{passive:true});
+  wrap.addEventListener('touchmove',e=>{if(drumDragY===null)return;const delta=Math.round((drumDragY-e.touches[0].clientY)/22);drumSetIdx(drumDragIdx+delta);e.preventDefault();},{passive:false});
+  wrap.addEventListener('touchend',()=>{drumDragY=null;});
+});
+
+/* ─── PLANTS ─── */
+const PICOS=['s-leaf','s-sprout','s-plant','s-soil','s-leaf'];
+function waterLabel(d){if(d===1)return'Diario';if(d<=3)return`Cada ${d} días`;if(d===7)return'Semanal';if(d===14)return'Quincenal';if(d===30)return'Mensual';return`Cada ${d} días`;}
+function locShort(loc){
+  if(!loc)return'';
+  const map={'Interior — luz indirecta':'Interior','Interior — poca luz':'Interior oscuro','Balcón — sol directo':'Balcón sol','Balcón — semisombra':'Balcón sombra','Exterior — maceta':'Exterior','Jardín — a tierra':'Jardín'};
+  return map[loc]||loc.split('—')[0].trim();
+}
+function renderPlants(){
+  document.getElementById('plantList').innerHTML=plants.map((p,i)=>`
+    <div class="pcard" onclick="openEditPlant(${p.id})">
+      <div class="pcard-inner">
+        <div class="pcard-photo">
+          ${p.photo?`<img src="${p.photo}">`:`<svg width="22" height="22"><use href="#${PICOS[i%PICOS.length]}"/></svg>`}
+        </div>
+        <div class="pcard-info">
+          <div class="pcard-name">${p.name}</div>
+          <div class="pcard-sp">${p.species||'—'}</div>
+          <div class="pcard-tags">
+            <span class="ptag">${waterLabel(p.waterDays)}</span>
+            ${p.loc?`<span class="ptag ptag-loc">${locShort(p.loc)}</span>`:''}
+            ${p.treat?`<span class="ptag ptag-w">Tratamiento</span>`:''}
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openNewPlant(){
+  editingId=null;acEvLocal=[];
+  document.getElementById('mPlantTitle').textContent='Nueva planta';
+  document.getElementById('mDeleteBtn').style.display='none';
+  document.getElementById('mHardDeleteBtn').style.display='none';
+  clearPModal();renderAcPanel();buildTypeChips();
+  drumIdx=5;renderDrum();
+  document.getElementById('plantModal').classList.add('open');
+}
+function openEditPlant(id){
+  const p=plants.find(x=>x.id===id);if(!p)return;
+  editingId=id;acEvLocal=[...(p.events||[])];
+  document.getElementById('mPlantTitle').textContent='Editar — '+p.name;
+  document.getElementById('mDeleteBtn').style.display='flex';
+  document.getElementById('mHardDeleteBtn').style.display='flex';
+  document.getElementById('f-name').value=p.name||'';
+  document.getElementById('f-species').value=p.species||'';
+  document.getElementById('f-loc').value=p.loc||'Interior — luz indirecta';
+  document.getElementById('f-sustrato').value=p.sustrato||'';
+  document.getElementById('f-fert').value=p.fert||'';
+  document.getElementById('f-luz').value=p.luz||'Media — luz indirecta';
+  document.getElementById('f-notes').value=p.notes||'';
+  document.getElementById('f-treat-cb').checked=p.treat||false;
+  document.getElementById('f-prob').value=p.prob||'';
+  document.getElementById('f-treat-type').value=p.treatType||'';
+  document.getElementById('f-treat-notes').value=p.treatNotes||'';
+  document.getElementById('treatBody').className='treat-body'+(p.treat?' open':'');
+  drumIdx=drumDaysToIdx(p.waterDays||7);renderDrum();
+  if(p.photo){document.getElementById('mPhotoImg').src=p.photo;document.getElementById('mPhotoImg').style.display='block';document.getElementById('mPhotoPh').style.display='none';}
+  else{document.getElementById('mPhotoImg').style.display='none';document.getElementById('mPhotoPh').style.display='flex';}
+  renderAcPanel();buildTypeChips();
+  document.getElementById('plantModal').classList.add('open');
+}
+function clearPModal(){
+  ['f-name','f-species','f-sustrato','f-fert','f-notes','f-prob','f-treat-type','f-treat-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-treat-cb').checked=false;
+  document.getElementById('treatBody').className='treat-body';
+  document.getElementById('mPhotoImg').style.display='none';
+  document.getElementById('mPhotoPh').style.display='flex';
+  document.getElementById('mPhotoImg').src='';
+  document.getElementById('evTxt').value='';
+  document.getElementById('evDate').value=dStr(0);
+}
+function closePlantModal(){document.getElementById('plantModal').classList.remove('open');editingId=null;}
+function handleMPhoto(input){
+  if(!input.files||!input.files[0])return;
+  const r=new FileReader();r.onload=e=>{document.getElementById('mPhotoImg').src=e.target.result;document.getElementById('mPhotoImg').style.display='block';document.getElementById('mPhotoPh').style.display='none';};r.readAsDataURL(input.files[0]);
+}
+function toggleTreat(e){if(e)e.stopPropagation();const cb=document.getElementById('f-treat-cb');cb.checked=!cb.checked;document.getElementById('treatBody').className='treat-body'+(cb.checked?' open':'');}
+function toggleTreatDirect(){const cb=document.getElementById('f-treat-cb');document.getElementById('treatBody').className='treat-body'+(cb.checked?' open':'');}
+function savePlant(){
+  const name=document.getElementById('f-name').value.trim();if(!name)return;
+  const data={name,species:document.getElementById('f-species').value,waterDays:DRUM_OPTIONS[drumIdx],loc:document.getElementById('f-loc').value,sustrato:document.getElementById('f-sustrato').value,fert:document.getElementById('f-fert').value,luz:document.getElementById('f-luz').value,notes:document.getElementById('f-notes').value,treat:document.getElementById('f-treat-cb').checked,prob:document.getElementById('f-prob').value,treatType:document.getElementById('f-treat-type').value,treatNotes:document.getElementById('f-treat-notes').value,photo:document.getElementById('mPhotoImg').src||'',events:[...acEvLocal]};
+  if(editingId){const i=plants.findIndex(p=>p.id===editingId);if(i>-1)plants[i]={...plants[i],...data};}
+  else plants.push({id:Date.now(),...data});
+  closePlantModal();renderPlants();renderCal();
+}
+
+/* ─── RETIRE PLANT ─── */
+const RETIRE_LABELS={falta_riego:'Falta de riego',exceso_riego:'Exceso de riego',regalo:'Regalo / donación',enfermedad:'Enfermedad o plaga',clima:'Efecto del clima',fin_ciclo:'Fin de ciclo natural',trasplante:'Trasplante externo',otro:'Otro motivo'};
+function confirmRetirePlant(){
+  if(!editingId)return;
+  retirePendingId=editingId;
+  document.getElementById('retire-reason').value='falta_riego';
+  document.getElementById('retire-notes').value='';
+  document.getElementById('retireModal').classList.add('open');
+}
+function executeRetire(){
+  const p=plants.find(x=>x.id===retirePendingId);if(!p)return;
+  const reason=document.getElementById('retire-reason').value;
+  const notes=document.getElementById('retire-notes').value;
+  retiredPlants.unshift({...p,retiredAt:new Date().toISOString().split('T')[0],retireReason:reason,retireNotes:notes});
+  plants=plants.filter(x=>x.id!==retirePendingId);
+  closePlantModal();
+  closeModal('retireModal');
+  renderPlants();renderCal();
+  retirePendingId=null;
+}
+function hardDeletePlant(){
+  if(!editingId)return;
+  if(!confirm('¿Eliminar permanentemente esta planta? No se guardará en el repositorio de bajas.'))return;
+  plants=plants.filter(p=>p.id!==editingId);
+  closePlantModal();renderPlants();renderCal();
+}
+
+/* ─── ARCHIVE ─── */
+function renderArchive(){
+  const el=document.getElementById('archiveList');
+  const empty=document.getElementById('archiveEmpty');
+  if(!retiredPlants.length){el.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  el.innerHTML=retiredPlants.map((p,i)=>`
+    <div style="background:var(--sf);border:1px solid var(--rule);border-radius:4px;margin-bottom:8px;overflow:hidden;display:flex;align-items:stretch;">
+      <div style="width:64px;background:var(--sf2);flex-shrink:0;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--rule);opacity:0.5;">
+        ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;">`:`<svg width="22" height="22" stroke="var(--ink3)" fill="none" stroke-width="1"><use href="#s-leaf"/></svg>`}
+      </div>
+      <div style="padding:8px 10px;flex:1;min-width:0;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:500;text-transform:uppercase;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+        <div style="font-size:10px;color:var(--sage);font-style:italic;margin-bottom:3px;">${p.species||'—'}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;background:var(--red-lt);color:var(--red);padding:1px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:0.06em;">${RETIRE_LABELS[p.retireReason]||p.retireReason}</span>
+          <span style="font-size:9px;color:var(--ink3);">Baja: ${new Date(p.retiredAt+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'})}</span>
+          ${p.loc?`<span style="font-family:'Barlow Condensed',sans-serif;font-size:9px;background:rgba(30,74,110,0.09);color:var(--info);padding:1px 5px;border-radius:2px;text-transform:uppercase;">${locShort(p.loc)}</span>`:''}
+        </div>
+        ${p.retireNotes?`<div style="font-size:10px;color:var(--ink3);margin-top:4px;font-style:italic;">${p.retireNotes}</div>`:''}
+      </div>
+      <div style="padding:8px;display:flex;align-items:flex-start;">
+        <button class="del-btn" onclick="deleteArchived(${i})" title="Eliminar del archivo">${sv('s-x',10,10)}</button>
+      </div>
+    </div>`).join('');
+}
+function deleteArchived(i){
+  if(!confirm('¿Eliminar esta planta del repositorio de bajas?'))return;
+  retiredPlants.splice(i,1);
+  renderArchive();
+}
+
+/* ─── SUPPLIES ─── */
+function renderSupplies(){
+  const el=document.getElementById('supplyList');
+  const SBL={ok:'sb-ok',low:'sb-low',out:'sb-out'};
+  const SBT={ok:'OK',low:'Poco',out:'Sin stock'};
+  el.innerHTML=supplies.map(s=>`
+    <div class="supply-item">
+      <div class="supply-name">${s.name}</div>
+      <div class="supply-stock">
+        <span>${s.qty} ${s.unit}</span>
+        <span class="supply-badge ${SBL[s.status]||'sb-ok'}">${SBT[s.status]||'OK'}</span>
+      </div>
+      <button class="del-btn" onclick="openEditSupply(${s.id})" title="Editar">${sv('s-edit',11,11)}</button>
+      <button class="del-btn" onclick="deleteSupplyDirect(${s.id})" title="Eliminar">${sv('s-del',10,10)}</button>
+    </div>`).join('');
+
+  // Shopping list
+  const toBuy=supplies.filter(s=>s.status==='low'||s.status==='out');
+  const shopEl=document.getElementById('shoppingList');
+  if(toBuy.length){
+    shopEl.innerHTML=`<div class="supply-section-hdr"><span class="supply-section-title">Lista de compras</span></div>`+
+    toBuy.map(s=>`<div class="shop-item">${sv('s-shop',10,10)}<span style="flex:1;">${s.name}</span>${s.status==='out'?`<span style="font-size:9px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">Urgente</span>`:''}</div>${s.reminder?`<div class="supply-reminder" style="padding:2px 8px 4px;">${s.reminder}</div>`:''}`).join('');
+  }else{shopEl.innerHTML='';}
+}
+function openAddSupply(){
+  document.getElementById('supplyAddRow').style.display='block';
+  document.getElementById('sName').value='';
+  document.getElementById('sQty').value='';
+  document.getElementById('sReminder').value='';
+}
+function saveSupply(){
+  const name=document.getElementById('sName').value.trim();if(!name)return;
+  supplies.push({id:Date.now(),name,qty:parseFloat(document.getElementById('sQty').value)||0,unit:document.getElementById('sUnit').value,status:document.getElementById('sStatus').value,reminder:document.getElementById('sReminder').value.trim()});
+  document.getElementById('supplyAddRow').style.display='none';
+  renderSupplies();
+}
+function cancelSupply(){document.getElementById('supplyAddRow').style.display='none';}
+function openEditSupply(id){
+  const s=supplies.find(x=>x.id===id);if(!s)return;
+  editingSupplyId=id;
+  document.getElementById('se-name').value=s.name;
+  document.getElementById('se-qty').value=s.qty;
+  document.getElementById('se-unit').value=s.unit;
+  document.getElementById('se-status').value=s.status;
+  document.getElementById('se-reminder').value=s.reminder||'';
+  document.getElementById('supplyEditModal').classList.add('open');
+}
+function saveSupplyEdit(){
+  const s=supplies.find(x=>x.id===editingSupplyId);if(!s)return;
+  s.name=document.getElementById('se-name').value.trim()||s.name;
+  s.qty=parseFloat(document.getElementById('se-qty').value)||0;
+  s.unit=document.getElementById('se-unit').value;
+  s.status=document.getElementById('se-status').value;
+  s.reminder=document.getElementById('se-reminder').value.trim();
+  closeModal('supplyEditModal');renderSupplies();
+}
+function deleteSupply(){
+  if(!editingSupplyId||!confirm('¿Eliminar este insumo?'))return;
+  supplies=supplies.filter(s=>s.id!==editingSupplyId);
+  closeModal('supplyEditModal');renderSupplies();
+}
+function deleteSupplyDirect(id){
+  if(!confirm('¿Eliminar este insumo?'))return;
+  supplies=supplies.filter(s=>s.id!==id);
+  renderSupplies();
+}
+
+/* ─── ACTIVITY PANEL ─── */
+const MONTHS=['Enero','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const DABB=['D','L','M','X','J','V','S'];
+const TYPE_DEFS=[{k:'r',lbl:'Riego',ico:'s-drop'},{k:'a',lbl:'Abono',ico:'s-flask'},{k:'p',lbl:'Poda',ico:'s-cut'},{k:'t',lbl:'Tratamiento',ico:'s-bug'},{k:'o',lbl:'Otro',ico:'s-cal'}];
+function buildTypeChips(){
+  document.getElementById('typeChips').innerHTML=TYPE_DEFS.map(t=>`
+    <div class="type-chip ${evType===t.k?'active-'+t.k:''}" onclick="selectEvType('${t.k}')">
+      ${sv(t.ico,11,11)}${t.lbl}
+    </div>`).join('');
+}
+function selectEvType(k){evType=k;buildTypeChips();}
+function renderAcPanel(){
+  document.getElementById('acTitle').textContent=MONTHS[acM]+' '+acY;
+  document.getElementById('acDLbls').innerHTML=DABB.map(d=>`<div class="ac-dlbl">${d}</div>`).join('');
+  const today=new Date(),first=new Date(acY,acM,1).getDay(),days=new Date(acY,acM+1,0).getDate();
+  const evDates=acEvLocal.map(e=>e.date);
+  let html='';for(let i=0;i<first;i++)html+='<div></div>';
+  for(let d=1;d<=days;d++){
+    const ds=`${acY}-${String(acM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isT=today.getDate()===d&&today.getMonth()===acM&&today.getFullYear()===acY;
+    const hasE=evDates.includes(ds);
+    html+=`<div class="acd ${isT?'acd-today':''} ${hasE?'acd-ev':''}" onclick="quickSetEvDate('${ds}')">${d}${hasE?'<div class="acd-dot"></div>':''}</div>`;
+  }
+  document.getElementById('acPGrid').innerHTML=html;
+  renderAcEvList();
+}
+function quickSetEvDate(ds){document.getElementById('evDate').value=ds;document.getElementById('evTxt').focus();}
+function acPrev(){acM--;if(acM<0){acM=11;acY--;}renderAcPanel();}
+function acNext(){acM++;if(acM>11){acM=0;acY++;}renderAcPanel();}
+function addEvt(){
+  const txt=document.getElementById('evTxt').value.trim();
+  const date=document.getElementById('evDate').value||dStr(0);
+  if(!txt)return;
+  acEvLocal.push({date,txt,type:evType});
+  document.getElementById('evTxt').value='';
+  renderAcPanel();
+}
+function removeEvt(i){acEvLocal.splice(i,1);renderAcPanel();}
+function renderAcEvList(){
+  const sorted=[...acEvLocal].sort((a,b)=>a.date.localeCompare(b.date));
+  const TYPEICO={r:'s-drop',a:'s-flask',p:'s-cut',t:'s-bug',o:'s-cal'};
+  const TYPECOL={r:'var(--info)',a:'var(--warn)',p:'var(--moss)',t:'var(--red)',o:'var(--ink3)'};
+  if(!sorted.length){document.getElementById('acEvList').innerHTML='<div class="ac-noev">Sin actividades registradas</div>';return;}
+  document.getElementById('acEvList').innerHTML=sorted.map((e,i)=>`
+    <div class="ac-evitem">
+      <svg width="10" height="10" fill="none" stroke="${TYPECOL[e.type]||'var(--ink3)'}" stroke-width="1.5" stroke-linecap="round"><use href="#${TYPEICO[e.type]||'s-cal'}"/></svg>
+      <span class="ac-ev-txt">${e.txt}</span>
+      <span class="ac-ev-dt">${new Date(e.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</span>
+      <button class="ac-ev-del" onclick="removeEvt(${i})">${sv('s-x',9,9)}</button>
+    </div>`).join('');
+}
+
+/* ─── CALENDAR ─── */
+function renderCal(){
+  document.getElementById('calMonthTitle').textContent=MONTHS[curM]+' '+curY;
+  document.getElementById('calDLbls').innerHTML=DABB.map(d=>`<div class="cal-dlbl">${d}</div>`).join('');
+  const today=new Date(),todayStr=dStr(0),first=new Date(curY,curM,1).getDay(),days=new Date(curY,curM+1,0).getDate();
+  let html='';for(let i=0;i<first;i++)html+='<div></div>';
+  for(let d=1;d<=days;d++){
+    const ds=`${curY}-${String(curM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isT=today.getDate()===d&&today.getMonth()===curM&&today.getFullYear()===curY;
+    const dayTasks=tasks.filter(t=>t.date===ds);
+    const hasPending=dayTasks.some(t=>!t.done);
+    const hasOverdue=dayTasks.some(t=>!t.done&&t.date<todayStr);
+    const mk=getLunar(new Date(curY,curM,d)).mark;
+    let cls='cd';
+    if(isT){cls+=' today';if(hasPending)cls+=' has-task';}
+    else if(hasOverdue)cls+=' overdue';
+    else if(hasPending)cls+=' has-task';
+    html+=`<div class="${cls}" onclick="showDayPreview('${ds}')">${d}<span class="moon-mark">${mk}</span>${hasPending?'<div class="cd-dot"></div>':''}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML=html;
+}
+function changeMonth(d){curM+=d;if(curM>11){curM=0;curY++;}if(curM<0){curM=11;curY--;}renderCal();}
+function showDayPreview(ds){
+  const dt=new Date(ds+'T12:00:00');
+  const dayTasks=tasks.filter(t=>t.date===ds);
+  const el=document.getElementById('dayPreview');
+  if(!dayTasks.length){el.innerHTML=`<div style="font-size:11px;color:var(--ink3);font-style:italic;">${dt.toLocaleDateString('es-AR',{day:'numeric',month:'short'})} — sin tareas</div>`;return;}
+  const BC={r:'tb-r',a:'tb-a',p:'tb-p',t:'tb-t',o:'tb-o'};
+  const BL={r:'Riego',a:'Abono',p:'Poda',t:'Tratamiento',o:'Tarea'};
+  el.innerHTML=`<div style="font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">${dt.toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</div>`+
+  dayTasks.map(t=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 7px;background:var(--sf);border-radius:3px;margin-bottom:3px;font-size:11px;">
+    <span class="tbadge ${BC[t.type]||'tb-o'}">${BL[t.type]||'Tarea'}</span>
+    <span style="flex:1;${t.done?'text-decoration:line-through;color:var(--ink3);':''}">${t.name}</span>
+    ${t.alarm?sv('s-bell',10,10):''}
+  </div>`).join('');
+}
+
+/* ─── TASKS ─── */
+function renderTaskList(){
+  const today=dStr(0);
+  const mt=tasks.filter(t=>{const d=new Date(t.date+'T12:00:00');return d.getMonth()===curM&&d.getFullYear()===curY;}).sort((a,b)=>a.date.localeCompare(b.date));
+  const el=document.getElementById('taskList');
+  if(!mt.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);padding:0.75rem 0;font-style:italic;">Sin tareas este mes</div>';return;}
+  const BC={r:'tb-r',a:'tb-a',p:'tb-p',t:'tb-t',o:'tb-o'};
+  const BL={r:'Riego',a:'Abono',p:'Poda',t:'Tratamiento',o:'Tarea'};
+  el.innerHTML=mt.map(t=>{
+    const dl=new Date(t.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+    const isOverdue=!t.done&&t.date<today;
+    return `<div class="task-card ${isOverdue?'overdue-task':''}">
+      <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id})">${sv('s-ok',8,8)}</div>
+      <div class="task-body">
+        <div class="task-nm ${t.done?'done':''}">${t.name}</div>
+        <div class="task-meta">
+          <span class="tbadge ${BC[t.type]||'tb-o'}">${BL[t.type]||'Tarea'}</span>
+          ${isOverdue?`<span class="overdue-label">Vencida</span>`:''}
+          <span>${t.plant}</span>
+          <span>·</span>
+          <span>${dl}</span>
+        </div>
+      </div>
+      <button class="alarm-btn ${t.alarm?'set':''}" onclick="toggleAlarm(${t.id})" title="${t.alarm?'Alarma activa':'Sin alarma'}">
+        ${sv(t.alarm?'s-bell':'s-bell-off',11,11)}
+      </button>
+      <button class="del-btn" onclick="deleteTask(${t.id})">${sv('s-x',10,10)}</button>
+    </div>`;
+  }).join('');
+}
+function toggleTask(id){const t=tasks.find(t=>t.id===id);if(t){t.done=!t.done;renderTaskList();renderCal();}}
+function deleteTask(id){tasks=tasks.filter(t=>t.id!==id);renderTaskList();renderCal();}
+function toggleAlarm(id){
+  const t=tasks.find(t=>t.id===id);if(!t)return;
+  if(t.alarm){t.alarm='';renderTaskList();return;}
+  if('Notification' in window){
+    Notification.requestPermission().then(perm=>{
+      if(perm==='granted'){t.alarm='same';scheduleAlarm(t);renderTaskList();}
+      else{alert('Permiso de notificaciones denegado.');}
+    });
+  } else {t.alarm='same';renderTaskList();}
+}
+function scheduleAlarm(t){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  const taskDate=new Date(t.date+'T08:00:00');
+  const now=new Date();
+  const delay=taskDate-now;
+  if(delay>0&&delay<7*24*3600000){
+    setTimeout(()=>{if(!t.done)new Notification('🌿 Jardinería — Recordatorio',{body:t.name+(t.plant&&t.plant!=='Todas'?' ('+t.plant+')':'')});},delay);
+  }
+}
+function openAddTask(){document.getElementById('t-date').value=dStr(0);document.getElementById('taskModal').classList.add('open');}
+function saveTask(){
+  const name=document.getElementById('t-name').value.trim();if(!name)return;
+  const alarm=document.getElementById('t-alarm').value;
+  const t={id:Date.now(),name,type:document.getElementById('t-type').value,date:document.getElementById('t-date').value,plant:document.getElementById('t-plant').value||'Todas',done:false,alarm};
+  tasks.push(t);
+  if(alarm&&'Notification' in window&&Notification.permission==='granted')scheduleAlarm(t);
+  else if(alarm&&'Notification' in window){Notification.requestPermission().then(p=>{if(p==='granted')scheduleAlarm(t);});}
+  closeModal('taskModal');renderTaskList();renderCal();
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+/* ─── IDENTIFY ─── */
+async function identifyPlant(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  const ld=document.getElementById('id-loading');
+  ld.style.display='flex';document.getElementById('resBox').style.display='none';
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    const b64=e.target.result.split(',')[1],mt=file.type||'image/jpeg';
+    try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:'Identificá esta planta. Respondé SOLO JSON sin markdown: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}. riego_dias: número entero de días entre riegos. Cuidados: máx 15 palabras.'}]}]})});
+      const data=await r.json(),raw=data.content.map(c=>c.text||'').join(''),clean=raw.replace(/```json|```/g,'').trim(),pl=JSON.parse(clean);
+      identifiedData=pl;
+      document.getElementById('resName').textContent=pl.nombre_comun+' / '+pl.nombre_cientifico;
+      document.getElementById('resDetail').textContent='Riego: cada '+pl.riego_dias+' días · Luz: '+pl.luz;
+      document.getElementById('resCare').textContent=pl.cuidados;
+      document.getElementById('resBox').style.display='block';
+    }catch(err){document.getElementById('resBox').innerHTML='<p style="font-size:11px;color:var(--ink3);">No se pudo identificar. Usá foto más nítida.</p>';document.getElementById('resBox').style.display='block';}
+    ld.style.display='none';
+  };reader.readAsDataURL(file);
+}
+function addFromIdentify(){
+  if(!identifiedData)return;
+  plants.push({id:Date.now(),name:identifiedData.nombre_comun,species:identifiedData.nombre_cientifico,waterDays:identifiedData.riego_dias||7,loc:'Interior — luz indirecta',sustrato:'',fert:'',luz:'Media — luz indirecta',notes:identifiedData.cuidados,treat:false,prob:'',treatType:'',treatNotes:'',photo:'',events:[]});
+  closeRes();renderPlants();
+}
+function closeRes(){document.getElementById('resBox').style.display='none';identifiedData=null;document.getElementById('fileInput').value='';}
+
+/* ─── CLOSE ON BG ─── */
+document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');});});
+
+/* ─── INIT ─── */
+renderDrum();renderPlants();renderCal();renderTaskList();
+document.getElementById('evDate').value=dStr(0);
+</script>
+</body>
+</html>
