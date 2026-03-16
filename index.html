@@ -1001,9 +1001,6 @@ button svg, button svg use { pointer-events: none; }
      § 2.6  POPUPS FLOTANTES
      ═══════════════════════════════════════════════════════════════════ -->
 
-<!-- Overlay para cerrar popup de día al click fuera -->
-<div id="dayOverlay" onclick="closeDayPopup()"></div>
-
 <!-- Popup: Detalle de día en calendario -->
 <div id="dayPopup" class="popup-base">
   <div class="dp-hdr">
@@ -1903,7 +1900,11 @@ async function identifyFromModal() {
 
   } catch (err) {
     console.error('identifyFromModal error:', err);
-    res.textContent = 'Error: ' + err.message.slice(0, 80);
+    const msg2 = err.message || '';
+    const isCors2 = msg2.includes('Failed to fetch') || msg2.includes('NetworkError') || msg2.includes('Load failed');
+    res.textContent = isCors2
+      ? 'Requiere servidor web activo e internet. No funciona desde archivo local.'
+      : 'Error: ' + msg2.slice(0, 80);
     res.style.color = 'rgba(168,194,153,0.5)';
   }
   btn.disabled = false;
@@ -1968,7 +1969,12 @@ async function identifyPlant(input) {
 
   } catch (err) {
     console.error('identifyPlant error:', err);
-    resBox.innerHTML = '<p style="font-size:11px;color:var(--ink3);">Error: ' + err.message.slice(0, 120) + '</p>';
+    const msg = err.message || '';
+    const isCors = msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed');
+    const userMsg = isCors
+      ? 'La IA requiere conexión activa a internet y que la app esté servida desde un servidor web (no como archivo local). Verificá tu conexión.'
+      : 'Error al identificar: ' + msg.slice(0, 100);
+    resBox.innerHTML = '<p style="font-size:11px;color:var(--ink3);">' + userMsg + '</p>';
     resBox.style.display = 'block';
   }
 
@@ -2217,40 +2223,53 @@ function showDayPopup(event, ds) {
   const dt       = new Date(ds + 'T12:00:00');
   const dayTasks = tasks.filter(t => t.date === ds);
   const popup    = document.getElementById('dayPopup');
+  const overlay  = document.getElementById('dayOverlay');
+  const BC = {r:'tb-r',a:'tb-a',p:'tb-p',t:'tb-t',o:'tb-o'};
+  const BL = {r:'Riego',a:'Abono',p:'Poda',t:'Tratamiento',o:'Tarea'};
 
-  document.getElementById('dpDate').textContent = dt.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  document.getElementById('dpDate').textContent =
+    dt.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
   document.getElementById('dpBody').innerHTML = !dayTasks.length
     ? '<div class="dp-empty">Sin tareas para este día.</div>'
     : dayTasks.map(t => `
         <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--rule);">
-          <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id});showDayPopup(event,'${ds}')" style="flex-shrink:0;">${sv('s-ok',8,8)}</div>
+          <div class="tcb ${t.done?'done':''}" onclick="event.stopPropagation();toggleTask(${t.id})" style="flex-shrink:0;">${sv('s-ok',8,8)}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;${t.done?'text-decoration:line-through;color:var(--ink3);':''}">${t.name}</div>
             <div style="display:flex;gap:4px;margin-top:2px;align-items:center;">
-              <span class="tbadge ${TASK_BADGE_CLS[t.type]||'tb-o'}">${TASK_TYPES[t.type]||'Tarea'}</span>
+              <span class="tbadge ${BC[t.type]||'tb-o'}">${BL[t.type]||'Tarea'}</span>
               <span style="font-size:9px;color:var(--ink3);">${t.plant||''}</span>
             </div>
           </div>
         </div>`).join('');
 
-  // Posicionar popup junto a la celda
+  // Position popup near the clicked cell
   const rect = event.target.closest('.cd').getBoundingClientRect();
-  const vw   = window.innerWidth, vh = window.innerHeight;
-  popup.style.display = 'block';
-  const pw = 220, ph2 = popup.offsetHeight || 200;
-  let left = rect.right + 6, top = rect.top;
-  if (left + pw > vw - 8) left = rect.left - pw - 6;
-  if (top  + ph2 > vh - 8) top = vh - ph2 - 8;
-  popup.style.left = Math.max(8, left) + 'px';
-  popup.style.top  = Math.max(8, top)  + 'px';
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const pw = 230;
+  // Reset inline styles before measuring
+  popup.style.cssText = '';
   popup.classList.add('open');
-  document.getElementById('dayOverlay').classList.add('open');
+  const ph2 = popup.offsetHeight || 220;
+  let left = rect.right + 8, top = rect.top;
+  if (left + pw > vw - 8) left = rect.left - pw - 8;
+  if (top + ph2 > vh - 8) top = vh - ph2 - 8;
+  if (top < 8) top = 8;
+  popup.style.left = left + 'px';
+  popup.style.top  = top  + 'px';
+
+  // Show overlay (outside .app so overflow:hidden can't clip it)
+  if (overlay) overlay.style.display = 'block';
 }
 
 function closeDayPopup() {
-  document.getElementById('dayPopup').classList.remove('open');
-  document.getElementById('dayOverlay').classList.remove('open');
+  const popup = document.getElementById('dayPopup');
+  const overlay = document.getElementById('dayOverlay');
+  // Remove class AND clear any inline display style
+  popup.classList.remove('open');
+  popup.style.display = '';
+  if (overlay) overlay.style.display = 'none';
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -2267,7 +2286,7 @@ function renderTaskList() {
     : mt.map(t => {
         const dl        = new Date(t.date + 'T12:00:00').toLocaleDateString('es-AR', { day:'numeric', month:'short' });
         const isOverdue = !t.done && t.date < today;
-        return `<div class="task-card ${isOverdue?'overdue-task':''}" ondblclick="openEditTask(${t.id})">
+        return `<div class="task-card ${isOverdue?'overdue-task':''}" onclick="openEditTask(${t.id})" style="cursor:pointer;">
           <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id})">${sv('s-ok',8,8)}</div>
           <div class="task-body">
             <div class="task-nm ${t.done?'done':''}">${t.name}</div>
@@ -2536,5 +2555,6 @@ function confirmRetirePlant() {
   openModal('retireModal');
 }
 </script>
+<div id="dayOverlay" onclick="closeDayPopup()" style="display:none;position:fixed;inset:0;z-index:790;background:transparent;"></div>
 </body>
 </html>
