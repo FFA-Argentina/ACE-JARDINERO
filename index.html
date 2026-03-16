@@ -193,20 +193,27 @@ body {
 }
 .nb:hover .nb-tip { opacity: 1; }
 
-/* Botón clima (fondo de sidebar) */
+/* Botón clima en sidebar — pill compacta arriba de nav-buttons */
 .nb-weather {
-  width: 36px;
+  width: 44px;
   border-radius: 6px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
   cursor: pointer;
-  margin-top: auto;
-  padding: 6px 0;
+  /* Va ANTES de los nav-buttons, no al final */
+  margin-bottom: 10px;
+  padding: 7px 2px;
   transition: background 0.15s;
-  border: none; background: transparent;
+  border: 1px solid rgba(168,194,153,0.15);
+  background: rgba(255,255,255,0.04);
+  flex-shrink: 0;
 }
-.nb-weather:hover       { background: rgba(255,255,255,0.07); }
-.nb-weather-temp        { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 500; color: #fff; line-height: 1; }
-.nb-weather-moon        { font-size: 9px; color: var(--sage-lt); line-height: 1; margin-top: 1px; }
+.nb-weather:hover         { background: rgba(255,255,255,0.10); border-color: rgba(168,194,153,0.3); }
+.nb-weather-temp          { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 500; color: #fff; line-height: 1; }
+.nb-weather-ico           { line-height: 1; }
+.nb-weather-ico svg       { width: 13px; height: 13px; stroke: var(--sage-lt); fill: none; stroke-width: 1.5; stroke-linecap: round; }
+.nb-weather-hum           { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; color: rgba(90,143,200,0.8); line-height: 1; }
+.nb-weather-moon          { font-size: 10px; line-height: 1; }
 
 /* ═══════════════════════════════════════════════════════════════════
    § 1.5  HEADER
@@ -553,6 +560,10 @@ body {
 .sec-inner::-webkit-scrollbar-track { background: transparent; }
 .sec-inner::-webkit-scrollbar-thumb { background: rgba(28,28,23,0.12); border-radius: 2px; }
 
+
+/* Ensure SVG children of buttons don't swallow click events */
+button svg, button svg use { pointer-events: none; }
+
 @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes pulse  { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes spin   { to { transform: rotate(360deg); } }
@@ -560,9 +571,94 @@ body {
 /* ═══════════════════════════════════════════════════════════════════
    § 1.15  RESPONSIVE
    ═══════════════════════════════════════════════════════════════════ */
+
+/* ── DESKTOP (>900px): 2 columnas — Inventario | Cal+Tareas apiladas ── */
+@media (min-width: 901px) {
+  .panel3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+  /* Col 1 = Inventario (ocupa toda la altura) */
+  .col-inv { grid-column: 1; grid-row: 1; }
+
+  /* Col 2 = contenedor flex vertical: calendario arriba + tareas desplegable abajo */
+  .col-cal-tasks {
+    grid-column: 2; grid-row: 1;
+    display: flex; flex-direction: column; overflow: hidden;
+    border-right: none;
+  }
+
+  /* Bloque calendario: mitad superior */
+  .col-cal {
+    flex: 1 1 0;
+    min-height: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+  .col-cal .col-body {
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+  }
+
+  /* Bloque tareas: altura colapsada por defecto, se expande al clic */
+  .col-tasks {
+    flex: 0 0 auto;
+    border-right: none;
+    overflow: hidden;
+    transition: flex-basis 0.28s cubic-bezier(.25,.46,.45,.94);
+  }
+  .col-tasks.tasks-collapsed { flex-basis: 38px; }
+  .col-tasks.tasks-expanded  { flex-basis: 45%; }
+  .col-tasks .col-hdr {
+    cursor: pointer;
+    user-select: none;
+  }
+  .col-tasks .col-hdr:hover { background: var(--sf); }
+  .col-tasks-arrow {
+    width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink3);
+    transition: transform 0.22s;
+    flex-shrink: 0;
+  }
+  .col-tasks-arrow svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .tasks-expanded .col-tasks-arrow { transform: rotate(180deg); }
+  .col-tasks .col-body { overflow-y: auto; }
+
+  /* Ocultar col-3 legacy (usamos col-cal-tasks en su lugar) */
+  .col-legacy-tasks { display: none; }
+}
+
+/* ── MOBILE (≤900px): columna única con scroll ── */
 @media (max-width: 900px) {
-  .panel3 { grid-template-columns: 1fr; overflow-y: auto; }
-  .col    { border-right: none; border-bottom: 1px solid var(--rule); }
+  .panel3 {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .col       { border-right: none; border-bottom: 1px solid var(--rule); overflow: visible; }
+  .col-body  { overflow: visible; }
+
+  /* Calendario móvil: mostrar completo sin recorte */
+  .col-cal .col-body {
+    overflow: visible;
+    height: auto;
+    padding: 8px;
+  }
+  .cal-grid { width: 100%; }
+  .cd { min-height: 32px; font-size: 12px; }
+
+  /* Contenedor apilado visible en móvil */
+  .col-cal-tasks {
+    display: contents; /* los hijos participan en el grid normal */
+  }
+  .col-tasks.tasks-collapsed,
+  .col-tasks.tasks-expanded { flex-basis: auto; }
+  .col-tasks-arrow { display: none; }
+  .col-legacy-tasks { display: none; }
 }
 </style>
 </head>
@@ -620,15 +716,20 @@ body {
   <div class="s-logo" onclick="openModal('creditsModal')" title="Créditos">
     <svg width="11" height="11" fill="none" stroke="var(--sage-lt)" stroke-width="1.5"><use href="#s-logo"/></svg>
   </div>
-  <button class="nb active" onclick="nav('work',this)">
+
+  <!-- Pill de clima — posicionada justo debajo del logo, antes de los nav -->
+  <button type="button" class="nb-weather" id="sidebarWeatherBtn" onclick="toggleWeatherPopup()" title="Clima y fase lunar">
+    <div class="nb-weather-temp" id="swTemp">--°</div>
+    <div class="nb-weather-ico"><svg><use href="#s-sun"/></svg></div>
+    <div class="nb-weather-hum" id="swHum">--%</div>
+    <div class="nb-weather-moon" id="swMoon">●</div>
+  </button>
+
+  <button type="button" class="nb active" onclick="nav('work',this)">
     <svg><use href="#s-grid"/></svg><span class="nb-tip">Inventario &amp; Tareas</span>
   </button>
   <button class="nb" onclick="nav('archive',this)">
     <svg><use href="#s-archive"/></svg><span class="nb-tip">Plantas dadas de baja</span>
-  </button>
-  <button class="nb-weather" id="sidebarWeatherBtn" onclick="toggleWeatherPopup()">
-    <div class="nb-weather-temp" id="swTemp">--°</div>
-    <div class="nb-weather-moon" id="swMoon">●</div>
   </button>
 </aside>
 
@@ -652,7 +753,7 @@ body {
   <div class="panel3" style="flex:1;overflow:hidden;">
 
     <!-- COL 1: INVENTARIO -->
-    <div class="col">
+    <div class="col col-inv">
       <div class="col-hdr">
         <span class="col-title">Inventario</span>
         <button class="btn btn-primary btn-sm" onclick="openNewPlant()">
@@ -725,38 +826,48 @@ body {
       </div>
     </div>
 
-    <!-- COL 2: CALENDARIO -->
-    <div class="col">
-      <div class="col-hdr">
-        <span class="col-title" id="calMonthTitle"></span>
-        <div class="cal-nav-g">
-          <button onclick="changeMonth(-1)"><svg width="10" height="10"><use href="#s-prev"/></svg></button>
-          <button onclick="changeMonth(1)"><svg width="10" height="10"><use href="#s-next"/></svg></button>
-        </div>
-      </div>
-      <div class="col-body">
-        <div class="cal-dlbls" id="calDLbls"></div>
-        <div class="cal-grid" id="calGrid"></div>
-        <div class="cal-legend">
-          <div class="leg-item"><div class="leg-dot leg-today"></div>Hoy</div>
-          <div class="leg-item"><div class="leg-dot leg-task"></div>Con tareas</div>
-          <div class="leg-item"><div class="leg-dot leg-over"></div>Pendiente vencido</div>
-        </div>
-      </div>
-    </div>
+    <!-- COL 2 (desktop): Calendario arriba + bloque Tareas expandible abajo -->
+    <div class="col-cal-tasks">
 
-    <!-- COL 3: TAREAS -->
-    <div class="col">
-      <div class="col-hdr">
-        <span class="col-title">Tareas</span>
-        <button class="btn btn-primary btn-sm" onclick="openAddTask()">
-          <svg><use href="#s-plus"/></svg>Nueva
-        </button>
+      <!-- Sub-col: CALENDARIO -->
+      <div class="col col-cal">
+        <div class="col-hdr">
+          <span class="col-title" id="calMonthTitle"></span>
+          <div class="cal-nav-g">
+            <button onclick="changeMonth(-1)"><svg width="10" height="10"><use href="#s-prev"/></svg></button>
+            <button onclick="changeMonth(1)"><svg width="10" height="10"><use href="#s-next"/></svg></button>
+          </div>
+        </div>
+        <div class="col-body">
+          <div class="cal-dlbls" id="calDLbls"></div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-legend">
+            <div class="leg-item"><div class="leg-dot leg-today"></div>Hoy</div>
+            <div class="leg-item"><div class="leg-dot leg-task"></div>Con tareas</div>
+            <div class="leg-item"><div class="leg-dot leg-over"></div>Pendiente vencido</div>
+          </div>
+        </div>
       </div>
-      <div class="col-body">
-        <div id="taskList"></div>
+
+      <!-- Sub-col: TAREAS (drawer expandible en desktop, plano en móvil) -->
+      <div class="col col-tasks tasks-collapsed" id="colTasks">
+        <div class="col-hdr" onclick="toggleTasksDrawer()" id="tasksDrawerHdr">
+          <span class="col-title">Tareas</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddTask()">
+              <svg><use href="#s-plus"/></svg>Nueva
+            </button>
+            <div class="col-tasks-arrow" id="tasksArrow">
+              <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="col-body" id="taskListBody">
+          <div id="taskList"></div>
+        </div>
       </div>
-    </div>
+
+    </div><!-- .col-cal-tasks -->
 
   </div>
 </div>
@@ -786,7 +897,7 @@ body {
 <div id="dayPopup" class="popup-base">
   <div class="dp-hdr">
     <span class="dp-date" id="dpDate"></span>
-    <button class="dp-close" onclick="closeDayPopup()">
+    <button type="button" class="dp-close" onclick="closeDayPopup()">
       <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#s-x"/></svg>
     </button>
   </div>
@@ -797,7 +908,7 @@ body {
 <div id="weatherPopup" class="popup-base">
   <div class="wp-hdr">
     <span class="wp-title">Clima &amp; Luna</span>
-    <button class="wp-close" onclick="toggleWeatherPopup()">
+    <button type="button" class="wp-close" onclick="toggleWeatherPopup()">
       <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#s-x"/></svg>
     </button>
   </div>
@@ -833,7 +944,7 @@ body {
   <div class="modal">
     <div class="mhdr">
       <div class="mtitle" id="mPlantTitle">Nueva planta</div>
-      <button class="mclose" onclick="closePlantModal()"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closePlantModal()"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody">
 
@@ -975,7 +1086,7 @@ body {
   <div class="modal" style="width:min(420px,98vw);">
     <div class="mhdr">
       <div class="mtitle">Dar de baja planta</div>
-      <button class="mclose" onclick="closeModal('retireModal')"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closeModal('retireModal')"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody">
       <div style="font-size:12px;color:var(--ink2);margin-bottom:12px;line-height:1.6;">La planta pasará al repositorio de bajas con la fecha y el motivo indicados.</div>
@@ -1006,7 +1117,7 @@ body {
   <div class="modal task-modal-sm">
     <div class="mhdr">
       <div class="mtitle">Nueva tarea</div>
-      <button class="mclose" onclick="closeModal('taskModal')"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closeModal('taskModal')"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody">
       <div class="fld"><label>Descripción</label><input type="text" id="t-name" placeholder="Ej: Regar todas las plantas"></div>
@@ -1048,7 +1159,7 @@ body {
   <div class="modal" style="width:min(400px,98vw);">
     <div class="mhdr">
       <div class="mtitle">Editar insumo</div>
-      <button class="mclose" onclick="closeModal('supplyEditModal')"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closeModal('supplyEditModal')"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody">
       <div class="fld"><label>Nombre</label><input type="text" id="se-name"></div>
@@ -1079,7 +1190,7 @@ body {
 <div class="modal-bg" id="creditsModal" onclick="if(event.target===this)closeModal('creditsModal')">
   <div class="modal" style="width:min(360px,92vw);text-align:center;">
     <div class="mhdr" style="justify-content:flex-end;border-bottom:none;padding-bottom:0;">
-      <button class="mclose" onclick="closeModal('creditsModal')"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closeModal('creditsModal')"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody" style="padding-top:4px;padding-bottom:1.5rem;">
       <div style="font-size:38px;margin-bottom:10px;">🌿</div>
@@ -1226,6 +1337,20 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 /* ─────────────────────────────────────────────────────────────────
    § 3.4  INIT — arranque y configuración inicial
    ───────────────────────────────────────────────────────────────── */
+
+/* ── Drawer de tareas (desktop) ── */
+let tasksDrawerOpen = false;
+function toggleTasksDrawer() {
+  // Only behaves as drawer on desktop
+  if (window.innerWidth <= 900) return;
+  tasksDrawerOpen = !tasksDrawerOpen;
+  const col = document.getElementById('colTasks');
+  if (col) {
+    col.classList.toggle('tasks-collapsed', !tasksDrawerOpen);
+    col.classList.toggle('tasks-expanded',   tasksDrawerOpen);
+  }
+}
+
 (function init() {
   // Fecha en header
   const now = new Date();
@@ -1234,7 +1359,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 
   // Fase lunar inicial en sidebar
   const ph = getLunar(new Date());
-  updateSidebarWeather('--', ph.mark);
+  updateSidebarWeather('--', ph.mark, 's-sun', null);
 
   // Drum selector
   renderDrum();
@@ -1309,21 +1434,26 @@ function loadWeather(lat, lon) {
       const temp = Math.round(c.temperature_2m * 10) / 10;
       const hum  = c.relative_humidity_2m || 0;
       const cond = codeTxt(c.weathercode || 0);
+      const ico  = codeIco(c.weathercode || 0);
       const ph   = getLunar(new Date());
-      updateSidebarWeather(temp, ph.mark);
+      updateSidebarWeather(temp, ph.mark, ico, hum);
       updateWeatherPopup(temp, cond, hum, d.daily, ph);
     })
     .catch(() => {
       const ph = getLunar(new Date());
-      updateSidebarWeather('--', ph.mark);
+      updateSidebarWeather('--', ph.mark, 's-sun', null);
     });
 }
 
-function updateSidebarWeather(temp, moonMark) {
+function updateSidebarWeather(temp, moonMark, icoId, hum) {
   const t = document.getElementById('swTemp');
   const m = document.getElementById('swMoon');
-  if (t) t.textContent = temp + '°';
-  if (m) m.textContent = moonMark;
+  const h = document.getElementById('swHum');
+  const icoEl = document.getElementById('sidebarWeatherBtn')?.querySelector('.nb-weather-ico svg use');
+  if (t) t.textContent = (temp !== '--') ? temp + '°' : '--°';
+  if (m) m.textContent = moonMark || '●';
+  if (h) h.textContent = (hum !== undefined && hum !== null) ? hum + '%' : '--%';
+  if (icoEl && icoId) icoEl.setAttribute('href', '#' + icoId);
 }
 
 function updateWeatherPopup(temp, cond, hum, daily, ph) {
@@ -1967,27 +2097,39 @@ function deleteTask(id)  { tasks = tasks.filter(t => t.id !== id); renderTaskLis
 
 /* ── Sugerencias de plantas en modal tarea ── */
 function showPlantSugg() {
-  renderPlantSugg(document.getElementById('t-plant').value.trim());
-  document.getElementById('plantSuggBox').style.display = 'block';
+  document.removeEventListener('click', closePlantSuggOutside);
+  renderPlantSugg('');  // always show full list on focus
+  const box = document.getElementById('plantSuggBox');
+  if (box) box.style.display = 'block';
   setTimeout(() => document.addEventListener('click', closePlantSuggOutside), 50);
 }
-function filterPlantSugg() { renderPlantSugg(document.getElementById('t-plant').value.trim()); }
+function filterPlantSugg() {
+  renderPlantSugg(document.getElementById('t-plant').value.trim());
+}
 function closePlantSuggOutside(e) {
-  if (!document.getElementById('plantSuggBox').contains(e.target) && e.target.id !== 't-plant') {
-    document.getElementById('plantSuggBox').style.display = 'none';
+  const box = document.getElementById('plantSuggBox');
+  const inp = document.getElementById('t-plant');
+  if (box && !box.contains(e.target) && e.target !== inp) {
+    box.style.display = 'none';
     document.removeEventListener('click', closePlantSuggOutside);
   }
 }
 function renderPlantSugg(query) {
   const box      = document.getElementById('plantSuggBox');
+  if (!box) return;
   const allNames = ['Todas', ...plants.map(p => p.name)];
-  const filtered = query ? allNames.filter(n => n.toLowerCase().includes(query.toLowerCase())) : allNames;
+  const filtered = query
+    ? allNames.filter(n => n.toLowerCase().includes(query.toLowerCase()))
+    : allNames;
   if (!filtered.length) { box.style.display = 'none'; return; }
-  box.innerHTML = filtered.map(name => `
-    <div class="plant-sugg-item" onclick="togglePlantSugg('${name.replace(/'/g,"\\'")}')">
-      <input type="checkbox" ${selectedPlants.includes(name) ? 'checked' : ''} onclick="event.stopPropagation();togglePlantSugg('${name.replace(/'/g,"\\'")}')">
+  box.innerHTML = filtered.map(name => {
+    const checked = selectedPlants.includes(name);
+    const safeN   = name.replace(/'/g,"\'");
+    return `<div class="plant-sugg-item" style="${checked?'background:rgba(51,77,40,0.07);':''}" onclick="togglePlantSugg('${safeN}')">
+      <input type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();togglePlantSugg('${safeN}')">
       <span>${name}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   box.style.display = 'block';
 }
 function togglePlantSugg(name) {
@@ -1995,11 +2137,15 @@ function togglePlantSugg(name) {
     selectedPlants = ['Todas'];
   } else {
     selectedPlants = selectedPlants.filter(n => n !== 'Todas');
-    selectedPlants.includes(name) ? selectedPlants = selectedPlants.filter(n => n !== name) : selectedPlants.push(name);
+    if (selectedPlants.includes(name)) {
+      selectedPlants = selectedPlants.filter(n => n !== name);
+    } else {
+      selectedPlants.push(name);
+    }
     if (!selectedPlants.length) selectedPlants = ['Todas'];
   }
   document.getElementById('t-plant').value = selectedPlants.join(', ');
-  renderPlantSugg(document.getElementById('t-plant').value.trim());
+  renderPlantSugg('');  // re-render full list with updated checkboxes
 }
 
 /* ── Abrir modal nueva tarea ── */
