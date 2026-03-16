@@ -22,7 +22,7 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
 
 /* ── LAYOUT ── */
 .app{display:flex;height:100vh;overflow:hidden;}
-.sidebar{width:54px;background:var(--moss2);display:flex;flex-direction:column;align-items:center;padding:1.25rem 0;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.04);}
+.sidebar{width:58px;background:var(--moss2);display:flex;flex-direction:column;align-items:center;padding:1.25rem 0;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.04);}
 .s-logo{width:24px;height:24px;border:1px solid rgba(168,194,153,0.3);border-radius:3px;display:flex;align-items:center;justify-content:center;margin-bottom:1.75rem;flex-shrink:0;}
 .s-logo svg{width:11px;height:11px;stroke:var(--sage-lt);fill:none;stroke-width:1.5;}
 .nb{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:4px;transition:background 0.15s;border:none;background:transparent;position:relative;flex-shrink:0;}
@@ -30,7 +30,7 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
 .nb:hover{background:rgba(255,255,255,0.07);}
 .nb:hover svg,.nb.active svg{stroke:#fff;}
 .nb.active{background:rgba(255,255,255,0.1);}
-.nb-tip{position:absolute;left:44px;background:var(--ink);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.12s;z-index:900;}
+.nb-tip{position:absolute;left:50px;background:var(--ink);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.12s;z-index:900;}
 .nb:hover .nb-tip{opacity:1;}
 
 .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
@@ -362,22 +362,119 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
   .col{border-right:none;border-bottom:1px solid var(--rule);}
   .sticky-detail{flex-direction:column;}
 }
+
+/* ── iOS ZOOM FIX: inputs must be >= 16px to prevent auto-zoom ── */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+
+/* ── SIDEBAR WEATHER ── */
+.nb-weather{width:36px;height:36px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;margin-top:auto;transition:background 0.15s;border:none;background:transparent;position:relative;padding:2px 0;}
+.nb-weather:hover{background:rgba(255,255,255,0.07);}
+.nb-weather-temp{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:500;color:#fff;line-height:1;}
+.nb-weather-moon{font-size:9px;color:var(--sage-lt);line-height:1;margin-top:1px;}
+
+/* ── WEATHER POPUP ── */
+#weatherPopup{
+  position:fixed;left:66px;bottom:12px;
+  width:280px;
+  background:var(--moss2);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:6px;
+  z-index:800;
+  display:none;
+  box-shadow:0 8px 32px rgba(0,0,0,0.35);
+  animation:fadeUp 0.18s ease both;
+}
+#weatherPopup.open{display:block;}
+.wp-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 6px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.wp-title{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:rgba(168,194,153,0.6);}
+.wp-close{width:18px;height:18px;border:none;background:none;cursor:pointer;color:rgba(168,194,153,0.5);display:flex;align-items:center;justify-content:center;padding:0;}
+.wp-close:hover{color:#fff;}
+.wp-body{padding:10px 12px;}
+.wp-cur{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.wp-temp-big{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:300;color:#fff;line-height:1;}
+.wp-cur-info{flex:1;}
+.wp-cond{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--sage-lt);text-transform:uppercase;letter-spacing:0.04em;}
+.wp-hum{font-size:10px;color:rgba(168,194,153,0.5);margin-top:2px;}
+.wp-forecast{display:flex;gap:3px;margin-bottom:10px;}
+.wp-fd{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.05);border-radius:3px;padding:5px 3px;text-align:center;}
+.wp-dow{font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:rgba(168,194,153,0.45);margin-bottom:2px;}
+.wp-ft{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:300;color:#fff;}
+.wp-fr{font-family:'Barlow Condensed',sans-serif;font-size:9px;color:rgba(90,143,200,0.7);margin-top:1px;}
+.wp-fhum{font-family:'Barlow Condensed',sans-serif;font-size:8px;color:rgba(168,194,153,0.4);}
+.wp-moon-sec{border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;}
+.wp-moon-title{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:rgba(168,194,153,0.5);margin-bottom:6px;}
+.wp-moon-row{display:flex;align-items:center;gap:8px;}
+.wp-moon-icon{font-size:18px;}
+.wp-moon-info{flex:1;}
+.wp-moon-name{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--sage-lt);text-transform:uppercase;letter-spacing:0.04em;}
+.wp-moon-rec{font-size:10px;color:rgba(168,194,153,0.55);margin-top:2px;line-height:1.4;}
+.wp-rec{font-size:10px;color:rgba(168,194,153,0.6);line-height:1.5;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.07);}
+
+
+/* ── TASK PLANT SUGGESTION ── */
+.plant-sugg-item{padding:7px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background 0.1s;}
+.plant-sugg-item:hover{background:var(--sf);}
+.plant-sugg-item input[type=checkbox]{width:13px;height:13px;accent-color:var(--moss);flex-shrink:0;}
+
+
+/* ── CALENDAR: full visible + day popup ── */
+.panel3{overflow:hidden;}
+.col-body{overflow-y:auto;}
+
+/* Calendar column: fit content */
+#sec-work .col:nth-child(2) .col-body{overflow:visible;padding:8px;}
+.cal-grid-wrap{overflow:visible;}
+.cd{font-size:10px;}
+
+/* Day detail popup */
+#dayPopup{
+  position:fixed;
+  z-index:700;
+  background:var(--bg);
+  border:1px solid var(--rule2);
+  border-radius:5px;
+  box-shadow:0 8px 28px rgba(28,28,23,0.18);
+  width:220px;
+  padding:0;
+  display:none;
+  animation:fadeUp 0.15s ease both;
+}
+#dayPopup.open{display:block;}
+.dp-hdr{padding:8px 10px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;}
+.dp-date{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink);}
+.dp-close{width:18px;height:18px;border:none;background:none;cursor:pointer;color:var(--ink3);display:flex;align-items:center;justify-content:center;padding:0;}
+.dp-body{padding:8px 10px;max-height:200px;overflow-y:auto;}
+.dp-empty{font-size:11px;color:var(--ink3);font-style:italic;}
+
+
+/* ── CALENDAR FIT ── */
+#sec-work .panel3 .col:nth-child(2) {
+  overflow: visible;
+}
+#sec-work .panel3 .col:nth-child(2) .col-body {
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+.cal-grid {
+  flex: 1;
+}
+.cal-dlbls {
+  flex-shrink: 0;
+}
+
+
+/* ── SIDEBAR BOTTOM WEATHER BTN ── */
+.sidebar {
+  justify-content: flex-start;
+}
+
 </style>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e3017">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Jardín">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js');
-      });
-    }
-  </script>
 </head>
 <body>
 
@@ -425,10 +522,45 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
 <div class="app">
 <!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="s-logo"><svg width="11" height="11" fill="none" stroke="var(--sage-lt)" stroke-width="1.5"><use href="#s-logo"/></svg></div>
+  <div class="s-logo" onclick="document.getElementById('creditsModal').classList.add('open')" title="Créditos" style="cursor:pointer;"><svg width="11" height="11" fill="none" stroke="var(--sage-lt)" stroke-width="1.5"><use href="#s-logo"/></svg></div>
   <button class="nb active" onclick="nav('work',this)" title="Inventario y Tareas"><svg><use href="#s-grid"/></svg><span class="nb-tip">Inventario &amp; Tareas</span></button>
   <button class="nb" onclick="nav('archive',this)" title="Archivo"><svg><use href="#s-archive"/></svg><span class="nb-tip">Plantas dadas de baja</span></button>
+  <div style="flex:1;"></div>
+  <button class="nb-weather" id="sidebarWeatherBtn" onclick="toggleWeatherPopup()" title="Clima y fase lunar">
+    <div class="nb-weather-temp" id="swTemp">--°</div>
+    <div class="nb-weather-moon" id="swMoon">●</div>
+  </button>
 </aside>
+
+<!-- WEATHER POPUP -->
+<div id="weatherPopup">
+  <div class="wp-hdr">
+    <span class="wp-title">Clima &amp; Luna</span>
+    <button class="wp-close" onclick="toggleWeatherPopup()"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#s-x"/></svg></button>
+  </div>
+  <div class="wp-body">
+    <div class="wp-cur">
+      <div class="wp-temp-big" id="wpTempBig">--°C</div>
+      <div class="wp-cur-info">
+        <div class="wp-cond" id="wpCond">—</div>
+        <div class="wp-hum" id="wpHum">Humedad: —</div>
+      </div>
+    </div>
+    <div class="wp-rec" id="wpRec"></div>
+    <div class="wp-forecast" id="wpForecast"></div>
+    <div class="wp-moon-sec">
+      <div class="wp-moon-title">Fase lunar</div>
+      <div class="wp-moon-row">
+        <div class="wp-moon-icon" id="wpMoonIcon">●</div>
+        <div class="wp-moon-info">
+          <div class="wp-moon-name" id="wpMoonName">—</div>
+          <div class="wp-moon-rec" id="wpMoonRec"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <div class="main">
 <!-- HEADER -->
@@ -534,7 +666,7 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
           <div class="leg-item"><div class="leg-dot leg-task"></div>Con tareas</div>
           <div class="leg-item"><div class="leg-dot leg-over"></div>Pendiente vencido</div>
         </div>
-        <div id="dayPreview" style="margin-top:10px;"></div>
+<!-- day detail now in popup -->
       </div>
     </div>
 
@@ -552,7 +684,7 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
   </div>
 
   <!-- ── STICKY BOTTOM BAR ── -->
-  <div class="sticky-bar sticky-collapsed" id="stickyBar" onclick="toggleSticky()">
+  <div class="sticky-bar sticky-collapsed" id="stickyBar" onclick="toggleSticky()" style="display:none;">
     <div class="sticky-compact">
       <div class="sticky-pill">
         <div class="sticky-pill-ico"><svg><use href="#s-therm"/></svg></div>
@@ -597,7 +729,7 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
     <div id="archiveList"></div>
     <div id="archiveEmpty" style="display:none;padding:2rem 0;text-align:center;font-size:12px;color:var(--ink3);font-style:italic;">No hay plantas dadas de baja todavía.</div>
   </div>
-  <div class="sticky-bar sticky-collapsed" id="stickyBar2" onclick="toggleSticky2()" style="cursor:pointer;">
+  <div class="sticky-bar sticky-collapsed" id="stickyBar2" onclick="toggleSticky2()" style="display:none;cursor:pointer;">
     <div class="sticky-compact">
       <div class="sticky-pill">
         <div class="sticky-pill-ico"><svg><use href="#s-therm"/></svg></div>
@@ -642,10 +774,18 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
     </div>
     <div class="mbody">
       <!-- Photo -->
-      <div class="mph" onclick="document.getElementById('mPhotoIn').click()" id="mPhotoZone">
-        <div class="mph-ph" id="mPhotoPh"><svg width="20" height="20"><use href="#s-cam"/></svg><span>Agregar foto</span></div>
-        <img id="mPhotoImg" src="" style="display:none;">
-        <input type="file" id="mPhotoIn" accept="image/*" capture="environment" class="mph-input" onchange="handleMPhoto(this)">
+      <div style="position:relative;margin-bottom:10px;">
+        <div class="mph" onclick="document.getElementById('mPhotoIn').click()" id="mPhotoZone" style="margin-bottom:0;">
+          <div class="mph-ph" id="mPhotoPh"><svg width="20" height="20"><use href="#s-cam"/></svg><span>Agregar foto</span></div>
+          <img id="mPhotoImg" src="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <input type="file" id="mPhotoIn" accept="image/*" capture="environment" class="mph-input" onchange="handleMPhoto(this)">
+        </div>
+        <div id="mIdBar" style="display:none;background:rgba(51,77,40,0.09);border:1px solid rgba(107,143,94,0.25);border-top:none;border-radius:0 0 3px 3px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div id="mIdResult" style="flex:1;font-size:11px;color:var(--moss);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.02em;"></div>
+          <button class="btn btn-primary btn-sm" id="mIdBtn" onclick="identifyFromModal()" style="flex-shrink:0;">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><use href="#s-leaf"/></svg>Identificar especie
+          </button>
+        </div>
       </div>
       <div class="f2">
         <div class="fld"><label>Nombre / apodo</label><input type="text" id="f-name" placeholder="Ej: Pothos de la sala"></div>
@@ -676,10 +816,17 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
         </div>
         <div class="fld"><label>Sustrato</label><input type="text" id="f-sustrato" placeholder="Ej: Universal + perlita"></div>
       </div>
-      <div class="f2">
-        <div class="fld"><label>Última fertilización</label><input type="date" id="f-fert"></div>
-        <div class="fld"><label>Exposición a luz</label>
-          <select id="f-luz"><option>Alta — sol directo</option><option>Media — luz indirecta</option><option>Baja — poca luz</option></select>
+      <div class="fld"><label>Exposición a luz</label>
+        <select id="f-luz"><option>Alta — sol directo</option><option>Media — luz indirecta</option><option>Baja — poca luz</option></select>
+      </div>
+      <div class="f2" style="align-items:end;">
+        <div class="fld"><label>Última fertilización</label><input type="date" id="f-fert" onchange="onFertChange()"></div>
+        <div class="fld">
+          <label>&nbsp;</label>
+          <div style="display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);cursor:pointer;height:34px;" onclick="document.getElementById('f-fert-remind').click()">
+            <input type="checkbox" id="f-fert-remind" style="width:14px;height:14px;accent-color:var(--moss);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation()">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink2);">Avisar próxima fertilización</span>
+          </div>
         </div>
       </div>
       <div class="fld"><label>Anotaciones</label><textarea id="f-notes" placeholder="Observaciones, historial, comportamiento..."></textarea></div>
@@ -717,9 +864,9 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
             <div class="ac-adder-title">Nueva actividad</div>
             <div class="type-chips" id="typeChips"></div>
             <div class="ac-adder-row">
-              <input type="text" id="evTxt" placeholder="Descripción breve..." onkeydown="if(event.key==='Enter')addEvt()">
-              <input type="date" id="evDate">
-              <button class="btn btn-primary btn-sm" onclick="addEvt()"><svg><use href="#s-plus"/></svg></button>
+              <input type="text" id="evTxt" placeholder="Descripción (opcional para tipos predefinidos)..." onkeydown="if(event.key==='Enter')addEvt()" style="font-size:13px;">
+              <input type="date" id="evDate" style="font-size:13px;">
+              <button class="btn btn-primary btn-sm" onclick="addEvt()" style="white-space:nowrap;padding:5px 10px;">Agregar</button>
             </div>
           </div>
           <div id="acEvList"></div>
@@ -787,9 +934,14 @@ body{font-family:'Barlow',sans-serif;font-weight:400;background:var(--bg);color:
         <div class="fld"><label>Fecha</label><input type="date" id="t-date"></div>
       </div>
       <div class="f2">
-        <div class="fld"><label>Planta / Ubicación</label><input type="text" id="t-plant" placeholder="Todas o nombre específico"></div>
+        <div class="fld" style="position:relative;">
+          <label>Planta / Ubicación</label>
+          <input type="text" id="t-plant" placeholder="Todas o ingresá un nombre..." autocomplete="off" oninput="filterPlantSugg()" onfocus="showPlantSugg()" style="font-size:13px;">
+          <div id="plantSuggBox" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);border:1px solid var(--rule2);border-radius:3px;z-index:600;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(28,28,23,0.12);">
+          </div>
+        </div>
         <div class="fld"><label>Alarma</label>
-          <select id="t-alarm"><option value="">Sin alarma</option><option value="same">Mismo día 08:00</option><option value="1d">1 día antes</option><option value="2d">2 días antes</option></select>
+          <select id="t-alarm" style="font-size:13px;"><option value="">Sin alarma</option><option value="same">Mismo día 08:00</option><option value="1d">1 día antes</option><option value="2d">2 días antes</option></select>
         </div>
       </div>
     </div>
@@ -920,7 +1072,8 @@ function renderStickyDetail(daily){
   let fc='';
   for(let i=0;i<5;i++){
     const dt=new Date(daily.time[i]+'T12:00:00');
-    fc+=`<div class="sdp-fd"><div class="sdp-dow">${i===0?'Hoy':DAYS[dt.getDay()]}</div><div class="sdp-ico">${sv(codeIco(daily.weathercode[i]||0),12,12)}</div><div class="sdp-t">${Math.round(daily.temperature_2m_max[i])}°</div><div class="sdp-r">${daily.precipitation_probability_max[i]||0}%</div></div>`;
+    const humVal=daily.relative_humidity_2m_mean?daily.relative_humidity_2m_mean[i]:'';
+    fc+=`<div class="sdp-fd"><div class="sdp-dow">${i===0?'Hoy':DAYS[dt.getDay()]}</div><div class="sdp-ico">${sv(codeIco(daily.weathercode[i]||0),12,12)}</div><div class="sdp-t">${Math.round(daily.temperature_2m_max[i])}°</div><div class="sdp-r">${daily.precipitation_probability_max[i]||0}%💧</div>${humVal!==''?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:8px;color:rgba(168,194,153,0.5);">${Math.round(humVal)}%HR</div>`:''}  </div>`;
   }
   ['','2'].forEach(s=>{
     const el=document.getElementById('sdpForecast'+s);
@@ -974,19 +1127,89 @@ function revGeo(lat,lon){
     }).catch(()=>{});
 }
 function loadWeather(lat,lon){
-  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&daily=temperature_2m_max,precipitation_probability_max,weathercode&forecast_days=5&timezone=America%2FArgentina%2FBuenos_Aires`)
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,relative_humidity_2m&daily=temperature_2m_max,precipitation_probability_max,weathercode,relative_humidity_2m_mean&forecast_days=5&timezone=America%2FArgentina%2FBuenos_Aires`)
     .then(r=>r.json()).then(d=>{
       weatherData=d;
       const c=d.current,daily=d.daily;
       const temp=Math.round(c.temperature_2m*10)/10;
+      const hum=c.relative_humidity_2m||0;
       const cond=codeTxt(c.weathercode||0);
       const ph=getLunar(new Date());
       updateStickyBars(temp,cond.toUpperCase(),ph.short,ph.mark);
+      updateSidebarWeather(temp,ph.mark);
+      updateWeatherPopup(temp,cond,hum,daily,ph);
       renderStickyDetail(daily);
     }).catch(()=>{
       const ph=getLunar(new Date());
       updateStickyBars('--','—',ph.short,ph.mark);
+      updateSidebarWeather('--',ph.mark);
     });
+}
+function updateSidebarWeather(temp,moonMark){
+  const t=document.getElementById('swTemp');
+  const m=document.getElementById('swMoon');
+  if(t)t.textContent=temp+'°';
+  if(m)m.textContent=moonMark;
+}
+function updateWeatherPopup(temp,cond,hum,daily,ph){
+  const el=id=>document.getElementById(id);
+  if(el('wpTempBig'))el('wpTempBig').textContent=temp+'°C';
+  if(el('wpCond'))el('wpCond').textContent=cond.toUpperCase();
+  if(el('wpHum'))el('wpHum').textContent='Humedad: '+hum+'%';
+  // Weather rec
+  const tempMax=daily?Math.round(daily.temperature_2m_max[0]):temp;
+  const rain=daily?(daily.precipitation_probability_max[0]||0):0;
+  let rec='';
+  if(tempMax>32)rec='Temperatura muy alta. Regá temprano o a la tarde.';
+  else if(rain>60)rec='Alta prob. de lluvia. Podés omitir el riego hoy.';
+  else if(tempMax<10)rec='Día frío. Alejá las macetas de corrientes de aire.';
+  else rec='Condiciones favorables para regar y revisar las plantas.';
+  if(el('wpRec'))el('wpRec').textContent=rec;
+  // Forecast
+  if(daily&&el('wpForecast')){
+    const DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    let fc='';
+    for(let i=0;i<5;i++){
+      const dt=new Date(daily.time[i]+'T12:00:00');
+      const hd=daily.relative_humidity_2m_mean?daily.relative_humidity_2m_mean[i]:'—';
+      fc+=`<div class="wp-fd"><div class="wp-dow">${i===0?'Hoy':DAYS[dt.getDay()]}</div><div class="sdp-ico">${sv(codeIco(daily.weathercode[i]||0),10,10)}</div><div class="wp-ft">${Math.round(daily.temperature_2m_max[i])}°</div><div class="wp-fr">${daily.precipitation_probability_max[i]||0}%</div><div class="wp-fhum">${typeof hd==='number'?hd+'%':''}</div></div>`;
+    }
+    el('wpForecast').innerHTML=fc;
+  }
+  // Moon
+  if(el('wpMoonName'))el('wpMoonName').textContent=ph.name;
+  const moonIcons={'Luna nueva':'🌑','Cuarto creciente':'🌓','Luna llena':'🌕','Cuarto menguante':'🌗'};
+  if(el('wpMoonIcon'))el('wpMoonIcon').textContent=moonIcons[ph.name]||'🌑';
+  const moonRecs={'Luna nueva':'Ideal para plantar y trasplantar.','Cuarto creciente':'Fertilizá para estimular crecimiento.','Luna llena':'Cosechá hierbas aromáticas. Evitá trasplantar.','Cuarto menguante':'Aplicá tratamientos contra plagas.'};
+  if(el('wpMoonRec'))el('wpMoonRec').textContent=moonRecs[ph.name]||'';
+}
+let weatherPopupOpen=false;
+function toggleWeatherPopup(){
+  weatherPopupOpen=!weatherPopupOpen;
+  const p=document.getElementById('weatherPopup');
+  if(weatherPopupOpen){
+    p.classList.add('open');
+    // Re-render with current data
+    const ph=getLunar(new Date());
+    if(weatherData){
+      const c=weatherData.current;
+      updateWeatherPopup(Math.round(c.temperature_2m*10)/10,codeTxt(c.weathercode||0),c.relative_humidity_2m||0,weatherData.daily,ph);
+    }else{
+      updateWeatherPopup('--','—',0,null,ph);
+    }
+    // Close on outside click
+    setTimeout(()=>document.addEventListener('click',closeWeatherPopupOutside),50);
+  }else{
+    p.classList.remove('open');
+    document.removeEventListener('click',closeWeatherPopupOutside);
+  }
+}
+function closeWeatherPopupOutside(e){
+  if(!document.getElementById('weatherPopup').contains(e.target)&&e.target.id!=='sidebarWeatherBtn'&&!document.getElementById('sidebarWeatherBtn').contains(e.target)){
+    document.getElementById('weatherPopup').classList.remove('open');
+    weatherPopupOpen=false;
+    document.removeEventListener('click',closeWeatherPopupOutside);
+  }
 }
 function codeTxt(c){if(c===0)return'Despejado';if(c<=2)return'Parcialmente nublado';if(c<=3)return'Nublado';if(c<=48)return'Neblina';if(c<=67)return'Lluvia';if(c<=99)return'Tormenta';return'Variable';}
 function codeIco(c){if(c===0)return's-sun';if(c<=2)return's-cs';if(c<=3)return's-cloud';if(c<=99)return's-rain';return's-cloud';}
@@ -1078,6 +1301,7 @@ function openEditPlant(id){
   document.getElementById('f-loc').value=p.loc||'Interior — luz indirecta';
   document.getElementById('f-sustrato').value=p.sustrato||'';
   document.getElementById('f-fert').value=p.fert||'';
+  const fertRemEl=document.getElementById('f-fert-remind');if(fertRemEl)fertRemEl.checked=p.fertRemind||false;
   document.getElementById('f-luz').value=p.luz||'Media — luz indirecta';
   document.getElementById('f-notes').value=p.notes||'';
   document.getElementById('f-treat-cb').checked=p.treat||false;
@@ -1086,8 +1310,8 @@ function openEditPlant(id){
   document.getElementById('f-treat-notes').value=p.treatNotes||'';
   document.getElementById('treatBody').className='treat-body'+(p.treat?' open':'');
   drumIdx=drumDaysToIdx(p.waterDays||7);renderDrum();
-  if(p.photo){document.getElementById('mPhotoImg').src=p.photo;document.getElementById('mPhotoImg').style.display='block';document.getElementById('mPhotoPh').style.display='none';}
-  else{document.getElementById('mPhotoImg').style.display='none';document.getElementById('mPhotoPh').style.display='flex';}
+  if(p.photo){document.getElementById('mPhotoImg').src=p.photo;document.getElementById('mPhotoImg').style.display='block';document.getElementById('mPhotoPh').style.display='none';const mIdBar=document.getElementById('mIdBar');if(mIdBar)mIdBar.style.display='flex';}
+  else{document.getElementById('mPhotoImg').style.display='none';document.getElementById('mPhotoPh').style.display='flex';const mIdBar=document.getElementById('mIdBar');if(mIdBar)mIdBar.style.display='none';}
   renderAcPanel();buildTypeChips();
   document.getElementById('plantModal').classList.add('open');
 }
@@ -1098,22 +1322,81 @@ function clearPModal(){
   document.getElementById('mPhotoImg').style.display='none';
   document.getElementById('mPhotoPh').style.display='flex';
   document.getElementById('mPhotoImg').src='';
+  const mIdBar=document.getElementById('mIdBar');if(mIdBar)mIdBar.style.display='none';
+  const fertRem=document.getElementById('f-fert-remind');if(fertRem)fertRem.checked=false;
   document.getElementById('evTxt').value='';
   document.getElementById('evDate').value=dStr(0);
+  window._mPhotoFile=null;
 }
 function closePlantModal(){document.getElementById('plantModal').classList.remove('open');editingId=null;}
 function handleMPhoto(input){
   if(!input.files||!input.files[0])return;
-  const r=new FileReader();r.onload=e=>{document.getElementById('mPhotoImg').src=e.target.result;document.getElementById('mPhotoImg').style.display='block';document.getElementById('mPhotoPh').style.display='none';};r.readAsDataURL(input.files[0]);
+  const file=input.files[0];
+  const r=new FileReader();
+  r.onload=e=>{
+    const img=document.getElementById('mPhotoImg');
+    img.src=e.target.result;
+    img.style.display='block';
+    document.getElementById('mPhotoPh').style.display='none';
+    // Show identify bar
+    const bar=document.getElementById('mIdBar');
+    if(bar){bar.style.display='flex';document.getElementById('mIdResult').textContent='';}
+    // Store file for identification
+    window._mPhotoFile=file;
+  };
+  r.readAsDataURL(file);
+}
+async function identifyFromModal(){
+  const file=window._mPhotoFile;
+  if(!file)return;
+  const btn=document.getElementById('mIdBtn');
+  const res=document.getElementById('mIdResult');
+  btn.disabled=true;
+  res.innerHTML='<span class="spin"></span> Identificando...';
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    const b64=e.target.result.split(',')[1],mt=file.type||'image/jpeg';
+    try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:'Identificá esta planta. Respondé SOLO JSON sin markdown: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}. riego_dias: número entero de días entre riegos. Cuidados: máx 15 palabras.'}]}]})});
+      const data=await r.json(),raw=data.content.map(c=>c.text||'').join(''),clean=raw.replace(/```json|```/g,'').trim(),pl=JSON.parse(clean);
+      // Fill form fields
+      if(pl.nombre_comun&&!document.getElementById('f-name').value)document.getElementById('f-name').value=pl.nombre_comun;
+      if(pl.nombre_cientifico)document.getElementById('f-species').value=pl.nombre_cientifico;
+      if(pl.riego_dias){drumIdx=drumDaysToIdx(pl.riego_dias);renderDrum();}
+      if(pl.luz){const luzMap={'alta':'Alta — sol directo','media':'Media — luz indirecta','baja':'Baja — poca luz'};const luzLower=pl.luz.toLowerCase();for(const k in luzMap){if(luzLower.includes(k))document.getElementById('f-luz').value=luzMap[k];}};
+      if(pl.cuidados&&!document.getElementById('f-notes').value)document.getElementById('f-notes').value=pl.cuidados;
+      res.textContent='✓ '+pl.nombre_comun+' / '+pl.nombre_cientifico;
+      res.style.color='var(--sage-lt)';
+    }catch(err){res.textContent='No se pudo identificar. Usá una foto más nítida.';res.style.color='rgba(168,194,153,0.5)';}
+    btn.disabled=false;
+  };
+  reader.readAsDataURL(file);
 }
 function toggleTreat(e){if(e)e.stopPropagation();const cb=document.getElementById('f-treat-cb');cb.checked=!cb.checked;document.getElementById('treatBody').className='treat-body'+(cb.checked?' open':'');}
 function toggleTreatDirect(){const cb=document.getElementById('f-treat-cb');document.getElementById('treatBody').className='treat-body'+(cb.checked?' open':'');}
 function savePlant(){
   const name=document.getElementById('f-name').value.trim();if(!name)return;
-  const data={name,species:document.getElementById('f-species').value,waterDays:DRUM_OPTIONS[drumIdx],loc:document.getElementById('f-loc').value,sustrato:document.getElementById('f-sustrato').value,fert:document.getElementById('f-fert').value,luz:document.getElementById('f-luz').value,notes:document.getElementById('f-notes').value,treat:document.getElementById('f-treat-cb').checked,prob:document.getElementById('f-prob').value,treatType:document.getElementById('f-treat-type').value,treatNotes:document.getElementById('f-treat-notes').value,photo:document.getElementById('mPhotoImg').src||'',events:[...acEvLocal]};
-  if(editingId){const i=plants.findIndex(p=>p.id===editingId);if(i>-1)plants[i]={...plants[i],...data};}
-  else plants.push({id:Date.now(),...data});
-  closePlantModal();renderPlants();renderCal();
+  const fertDate=document.getElementById('f-fert').value;
+  const fertRemind=document.getElementById('f-fert-remind')&&document.getElementById('f-fert-remind').checked;
+  const photoImg=document.getElementById('mPhotoImg');
+  const photoSrc=(photoImg&&photoImg.style.display!=='none'&&photoImg.src&&!photoImg.src.endsWith('/'))?photoImg.src:'';
+  const data={name,species:document.getElementById('f-species').value,waterDays:DRUM_OPTIONS[drumIdx],loc:document.getElementById('f-loc').value,sustrato:document.getElementById('f-sustrato').value,fert:fertDate,fertRemind:fertRemind,luz:document.getElementById('f-luz').value,notes:document.getElementById('f-notes').value,treat:document.getElementById('f-treat-cb').checked,prob:document.getElementById('f-prob').value,treatType:document.getElementById('f-treat-type').value,treatNotes:document.getElementById('f-treat-notes').value,photo:photoSrc,events:[...acEvLocal]};
+  let savedId;
+  if(editingId){const i=plants.findIndex(p=>p.id===editingId);if(i>-1){plants[i]={...plants[i],...data};savedId=editingId;}}
+  else{savedId=Date.now();plants.push({id:savedId,...data});}
+  // Add fertilization reminder to calendar tasks
+  if(fertRemind&&fertDate){
+    const nextFert=new Date(fertDate+'T12:00:00');
+    nextFert.setDate(nextFert.getDate()+30);
+    const nextDs=nextFert.toISOString().split('T')[0];
+    const alreadyExists=tasks.some(t=>t.type==='a'&&t.plant===name&&t.date===nextDs);
+    if(!alreadyExists)tasks.push({id:Date.now()+1,name:'Fertilizar '+name,type:'a',date:nextDs,plant:name,done:false,alarm:'1d'});
+  }
+  closePlantModal();renderPlants();renderCal();renderTaskList();
+}
+function onFertChange(){
+  const cb=document.getElementById('f-fert-remind');
+  if(cb&&document.getElementById('f-fert').value)cb.closest('div[style]').style.opacity='1';
 }
 
 /* ─── RETIRE PLANT ─── */
@@ -1272,9 +1555,12 @@ function quickSetEvDate(ds){document.getElementById('evDate').value=ds;document.
 function acPrev(){acM--;if(acM<0){acM=11;acY--;}renderAcPanel();}
 function acNext(){acM++;if(acM>11){acM=0;acY++;}renderAcPanel();}
 function addEvt(){
-  const txt=document.getElementById('evTxt').value.trim();
+  const rawTxt=document.getElementById('evTxt').value.trim();
   const date=document.getElementById('evDate').value||dStr(0);
-  if(!txt)return;
+  const TYPE_LABELS={r:'Riego',a:'Abono',p:'Poda',t:'Tratamiento',o:'Otro'};
+  // For non-"otro" types, description is optional — use type label as fallback
+  if(!rawTxt && evType==='o') return;
+  const txt=rawTxt || TYPE_LABELS[evType] || 'Actividad';
   acEvLocal.push({date,txt,type:evType});
   document.getElementById('evTxt').value='';
   renderAcPanel();
@@ -1311,7 +1597,7 @@ function renderCal(){
     if(isT){cls+=' today';if(hasPending)cls+=' has-task';}
     else if(hasOverdue)cls+=' overdue';
     else if(hasPending)cls+=' has-task';
-    html+=`<div class="${cls}" onclick="showDayPreview('${ds}')">${d}<span class="moon-mark">${mk}</span>${hasPending?'<div class="cd-dot"></div>':''}</div>`;
+    html+=`<div class="${cls}" onclick="showDayPopup(event,'${ds}')">${d}<span class="moon-mark">${mk}</span>${hasPending?'<div class="cd-dot"></div>':''}</div>`;
   }
   document.getElementById('calGrid').innerHTML=html;
 }
@@ -1342,7 +1628,7 @@ function renderTaskList(){
   el.innerHTML=mt.map(t=>{
     const dl=new Date(t.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'});
     const isOverdue=!t.done&&t.date<today;
-    return `<div class="task-card ${isOverdue?'overdue-task':''}">
+    return `<div class="task-card ${isOverdue?'overdue-task':''}" ondblclick="openEditTask(${t.id})">
       <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id})">${sv('s-ok',8,8)}</div>
       <div class="task-body">
         <div class="task-nm ${t.done?'done':''}">${t.name}</div>
@@ -1382,18 +1668,156 @@ function scheduleAlarm(t){
     setTimeout(()=>{if(!t.done)new Notification('🌿 Jardinería — Recordatorio',{body:t.name+(t.plant&&t.plant!=='Todas'?' ('+t.plant+')':'')});},delay);
   }
 }
-function openAddTask(){document.getElementById('t-date').value=dStr(0);document.getElementById('taskModal').classList.add('open');}
+function openAddTask(){
+  editingTaskId=null;selectedPlants=['Todas'];
+  document.getElementById('t-name').value='';
+  document.getElementById('t-type').value='r';
+  document.getElementById('t-date').value=dStr(0);
+  document.getElementById('t-plant').value='Todas';
+  document.getElementById('t-alarm').value='';
+  const modal=document.getElementById('taskModal');
+  modal.querySelector('.mtitle').textContent='Nueva tarea';
+  const delBtn=document.getElementById('taskDelBtn');
+  if(delBtn)delBtn.style.display='none';
+  modal.classList.add('open');
+}
 function saveTask(){
   const name=document.getElementById('t-name').value.trim();if(!name)return;
   const alarm=document.getElementById('t-alarm').value;
-  const t={id:Date.now(),name,type:document.getElementById('t-type').value,date:document.getElementById('t-date').value,plant:document.getElementById('t-plant').value||'Todas',done:false,alarm};
-  tasks.push(t);
-  if(alarm&&'Notification' in window&&Notification.permission==='granted')scheduleAlarm(t);
-  else if(alarm&&'Notification' in window){Notification.requestPermission().then(p=>{if(p==='granted')scheduleAlarm(t);});}
+  const plantVal=selectedPlants.length?selectedPlants.join(', '):(document.getElementById('t-plant').value||'Todas');
+  if(editingTaskId){
+    const t=tasks.find(x=>x.id===editingTaskId);
+    if(t){t.name=name;t.type=document.getElementById('t-type').value;t.date=document.getElementById('t-date').value;t.plant=plantVal;t.alarm=alarm;}
+  } else {
+    const t={id:Date.now(),name,type:document.getElementById('t-type').value,date:document.getElementById('t-date').value,plant:plantVal,done:false,alarm};
+    tasks.push(t);
+    if(alarm&&'Notification' in window&&Notification.permission==='granted')scheduleAlarm(t);
+    else if(alarm&&'Notification' in window){Notification.requestPermission().then(p=>{if(p==='granted')scheduleAlarm(t);});}
+  }
+  editingTaskId=null;
   closeModal('taskModal');renderTaskList();renderCal();
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
+
+/* ─── DAY POPUP ─── */
+function showDayPopup(event, ds){
+  event.stopPropagation();
+  const dt=new Date(ds+'T12:00:00');
+  const dayTasks=tasks.filter(t=>t.date===ds);
+  const popup=document.getElementById('dayPopup');
+  const BC={r:'tb-r',a:'tb-a',p:'tb-p',t:'tb-t',o:'tb-o'};
+  const BL={r:'Riego',a:'Abono',p:'Poda',t:'Tratamiento',o:'Tarea'};
+  document.getElementById('dpDate').textContent=dt.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  if(!dayTasks.length){
+    document.getElementById('dpBody').innerHTML='<div class="dp-empty">Sin tareas para este día.</div>';
+  } else {
+    document.getElementById('dpBody').innerHTML=dayTasks.map(t=>`
+      <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--rule);">
+        <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id});showDayPopup(event,'${ds}')" style="flex-shrink:0;">${sv('s-ok',8,8)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;${t.done?'text-decoration:line-through;color:var(--ink3);':''}">${t.name}</div>
+          <div style="display:flex;gap:4px;margin-top:2px;align-items:center;">
+            <span class="tbadge ${BC[t.type]||'tb-o'}">${BL[t.type]||'Tarea'}</span>
+            <span style="font-size:9px;color:var(--ink3);">${t.plant||''}</span>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+  // Position popup near click
+  const rect=event.target.closest('.cd').getBoundingClientRect();
+  const vw=window.innerWidth, vh=window.innerHeight;
+  popup.style.display='block';
+  const pw=220, ph2=popup.offsetHeight||200;
+  let left=rect.right+6;
+  let top=rect.top;
+  if(left+pw>vw-8) left=rect.left-pw-6;
+  if(top+ph2>vh-8) top=vh-ph2-8;
+  popup.style.left=Math.max(8,left)+'px';
+  popup.style.top=Math.max(8,top)+'px';
+  popup.classList.add('open');
+  setTimeout(()=>document.addEventListener('click',closeDayPopupOutside),50);
+}
+function closeDayPopup(){
+  document.getElementById('dayPopup').classList.remove('open');
+  document.removeEventListener('click',closeDayPopupOutside);
+}
+function closeDayPopupOutside(e){
+  if(!document.getElementById('dayPopup').contains(e.target)){closeDayPopup();}
+}
+
+
+/* ─── TASK PLANT SUGGESTIONS ─── */
+let selectedPlants=[];
+function showPlantSugg(){
+  const box=document.getElementById('plantSuggBox');
+  renderPlantSugg(document.getElementById('t-plant').value.trim());
+  box.style.display='block';
+  setTimeout(()=>document.addEventListener('click',closePlantSuggOutside),50);
+}
+function closePlantSuggOutside(e){
+  if(!document.getElementById('plantSuggBox').contains(e.target)&&e.target.id!=='t-plant'){
+    document.getElementById('plantSuggBox').style.display='none';
+    document.removeEventListener('click',closePlantSuggOutside);
+  }
+}
+function filterPlantSugg(){
+  renderPlantSugg(document.getElementById('t-plant').value.trim());
+}
+function renderPlantSugg(query){
+  const box=document.getElementById('plantSuggBox');
+  const allNames=['Todas',...plants.map(p=>p.name)];
+  const filtered=query?allNames.filter(n=>n.toLowerCase().includes(query.toLowerCase())):allNames;
+  if(!filtered.length){box.style.display='none';return;}
+  box.innerHTML=filtered.map(name=>`
+    <div class="plant-sugg-item" onclick="togglePlantSugg('${name.replace(/'/g,"\'")}')">
+      <input type="checkbox" ${selectedPlants.includes(name)?'checked':''} onclick="event.stopPropagation();togglePlantSugg('${name.replace(/'/g,"\'")}')">
+      <span>${name}</span>
+    </div>`).join('');
+  box.style.display='block';
+}
+function togglePlantSugg(name){
+  if(name==='Todas'){
+    selectedPlants=['Todas'];
+  } else {
+    selectedPlants=selectedPlants.filter(n=>n!=='Todas');
+    if(selectedPlants.includes(name)){
+      selectedPlants=selectedPlants.filter(n=>n!==name);
+    } else {
+      selectedPlants.push(name);
+    }
+  }
+  if(!selectedPlants.length) selectedPlants=['Todas'];
+  document.getElementById('t-plant').value=selectedPlants.join(', ');
+  renderPlantSugg(document.getElementById('t-plant').value.trim());
+}
+
+/* ─── TASK EDIT (double-click) ─── */
+let editingTaskId=null;
+function openEditTask(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  editingTaskId=id;
+  document.getElementById('t-name').value=t.name||'';
+  document.getElementById('t-type').value=t.type||'r';
+  document.getElementById('t-date').value=t.date||dStr(0);
+  selectedPlants=t.plant?t.plant.split(', '):['Todas'];
+  document.getElementById('t-plant').value=t.plant||'Todas';
+  document.getElementById('t-alarm').value=t.alarm||'';
+  const modal=document.getElementById('taskModal');
+  modal.querySelector('.mtitle').textContent='Editar tarea';
+  // Add delete button if not present
+  let delBtn=document.getElementById('taskDelBtn');
+  if(!delBtn){
+    delBtn=document.createElement('button');
+    delBtn.id='taskDelBtn';
+    delBtn.className='btn btn-danger';
+    delBtn.innerHTML=`${sv('s-del',10,10)} Eliminar`;
+    delBtn.onclick=()=>{deleteTask(editingTaskId);closeModal('taskModal');};
+    modal.querySelector('.mfoot').insertBefore(delBtn, modal.querySelector('.mfoot-r'));
+  }
+  delBtn.style.display='flex';
+  modal.classList.add('open');
+}
 /* ─── IDENTIFY ─── */
 async function identifyPlant(input){
   if(!input.files||!input.files[0])return;
@@ -1417,8 +1841,26 @@ async function identifyPlant(input){
 }
 function addFromIdentify(){
   if(!identifiedData)return;
-  plants.push({id:Date.now(),name:identifiedData.nombre_comun,species:identifiedData.nombre_cientifico,waterDays:identifiedData.riego_dias||7,loc:'Interior — luz indirecta',sustrato:'',fert:'',luz:'Media — luz indirecta',notes:identifiedData.cuidados,treat:false,prob:'',treatType:'',treatNotes:'',photo:'',events:[]});
-  closeRes();renderPlants();
+  // Open new plant modal pre-filled instead of silently adding
+  openNewPlant();
+  document.getElementById('f-name').value=identifiedData.nombre_comun||'';
+  document.getElementById('f-species').value=identifiedData.nombre_cientifico||'';
+  if(identifiedData.riego_dias){drumIdx=drumDaysToIdx(identifiedData.riego_dias);renderDrum();}
+  if(identifiedData.cuidados)document.getElementById('f-notes').value=identifiedData.cuidados;
+  // Carry over photo if captured via fileInput
+  const fi=document.getElementById('fileInput');
+  if(fi&&fi.files&&fi.files[0]){
+    const r=new FileReader();
+    r.onload=e=>{
+      const img=document.getElementById('mPhotoImg');
+      img.src=e.target.result;img.style.display='block';
+      document.getElementById('mPhotoPh').style.display='none';
+      const bar=document.getElementById('mIdBar');
+      if(bar){bar.style.display='flex';document.getElementById('mIdResult').textContent='✓ '+identifiedData.nombre_comun;}
+    };
+    r.readAsDataURL(fi.files[0]);
+  }
+  closeRes();
 }
 function closeRes(){document.getElementById('resBox').style.display='none';identifiedData=null;document.getElementById('fileInput').value='';}
 
@@ -1428,6 +1870,41 @@ document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',
 /* ─── INIT ─── */
 renderDrum();renderPlants();renderCal();renderTaskList();
 document.getElementById('evDate').value=dStr(0);
+// Init sidebar weather with moon
+(function(){const ph=getLunar(new Date());updateSidebarWeather('--',ph.mark);})();
+
 </script>
+
+<!-- CREDITS MODAL -->
+<div class="modal-bg" id="creditsModal" onclick="if(event.target===this)closeModal('creditsModal')">
+  <div class="modal" style="width:min(360px,92vw);text-align:center;">
+    <div class="mhdr" style="justify-content:flex-end;border-bottom:none;padding-bottom:0;">
+      <button class="mclose" onclick="closeModal('creditsModal')"><svg><use href="#s-x"/></svg></button>
+    </div>
+    <div class="mbody" style="padding-top:4px;padding-bottom:1.5rem;">
+      <div style="font-size:38px;margin-bottom:10px;">🌿</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:var(--moss);margin-bottom:6px;">Ayudante de Jardinería</div>
+      <div style="font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.6;">
+        <strong>Autor:</strong> Ferxho
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--rule);border-radius:6px;padding:14px 18px;margin-bottom:12px;line-height:1.7;font-size:13px;color:var(--ink2);">
+        Para que <em>Ace</em> organice<br>su jardín botánico personal.
+      </div>
+      <div style="font-size:28px;margin-top:10px;">❤️</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--ink3);margin-top:10px;letter-spacing:0.08em;text-transform:uppercase;">Te amo</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- DAY DETAIL POPUP -->
+<div id="dayPopup">
+  <div class="dp-hdr">
+    <span class="dp-date" id="dpDate"></span>
+    <button class="dp-close" onclick="closeDayPopup()"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#s-x"/></svg></button>
+  </div>
+  <div class="dp-body" id="dpBody"></div>
+</div>
+
 </body>
 </html>
