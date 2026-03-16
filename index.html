@@ -97,14 +97,21 @@
    § 1.2  RESET Y BASE
    ═══════════════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+/* height:100% set in desktop media query below */
 body {
   font-family: 'Barlow', sans-serif;
   font-weight: 400;
   background: var(--bg);
   color: var(--ink);
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  /* overflow is set per breakpoint in §1.15 */
+}
+/* Desktop: fixed viewport, no scroll on body */
+@media (min-width: 901px) {
+  html, body { height: 100%; overflow: hidden; }
+  .app  { height: 100vh; overflow: hidden; }
+  .main { overflow: hidden; }
+  .sec.active { display: flex; }
 }
 /* Evitar zoom automático en iOS */
 @media (max-width: 768px) {
@@ -521,8 +528,10 @@ body {
 .wp-fd             { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-sm); padding: 5px 3px; text-align: center; }
 .wp-dow            { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: rgba(168,194,153,0.45); margin-bottom: 2px; }
 .wp-ft             { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 300; color: #fff; }
-.wp-fr             { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; color: rgba(90,143,200,0.7); margin-top: 1px; }
-.wp-fhum           { font-family: 'Barlow Condensed', sans-serif; font-size: 8px; color: rgba(168,194,153,0.4); }
+/* Humedad: dato principal (mayor tamaño, color verde-agua destacado) */
+.wp-fhum           { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 500; color: rgba(120,200,220,0.9); margin-top: 2px; }
+/* Precipitación: dato secundario (menor tamaño, más tenue) */
+.wp-fr             { font-family: 'Barlow Condensed', sans-serif; font-size: 8px; color: rgba(168,194,153,0.4); margin-top: 0; }
 .wp-moon-sec       { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 8px; }
 .wp-moon-title     { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(168,194,153,0.5); margin-bottom: 6px; }
 .wp-moon-row       { display: flex; align-items: center; gap: 8px; }
@@ -631,34 +640,61 @@ button svg, button svg use { pointer-events: none; }
   .col-legacy-tasks { display: none; }
 }
 
-/* ── MOBILE (≤900px): columna única con scroll ── */
+/* ── MOBILE (≤900px): flujo vertical, scroll nativo del documento ── */
 @media (max-width: 900px) {
-  .panel3 {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-  .col       { border-right: none; border-bottom: 1px solid var(--rule); overflow: visible; }
-  .col-body  { overflow: visible; }
+  /* Permitir que el cuerpo y la app crezcan más allá del viewport */
+  html, body { height: auto; overflow: auto; }
+  body       { overflow-x: hidden; }
+  .app       { height: auto; min-height: 100vh; overflow: visible; flex-direction: column; }
+  .main      { overflow: visible; height: auto; }
 
-  /* Calendario móvil: mostrar completo sin recorte */
+  /* Secciones: bloque normal, sin fixed-height */
+  .sec.active { display: block; overflow: visible; height: auto; }
+
+  /* Panel: una sola columna, bloque natural */
+  .panel3 {
+    display: block;
+    overflow: visible;
+    height: auto;
+  }
+
+  /* Columnas: apiladas, sin overflow oculto */
+  .col {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    overflow: visible;
+    height: auto;
+    max-height: none;
+  }
+  .col-body {
+    overflow: visible;
+    height: auto;
+    max-height: none;
+    padding: 10px 12px;
+  }
+
+  /* Calendario: crecer libremente */
   .col-cal .col-body {
     overflow: visible;
     height: auto;
     padding: 8px;
   }
   .cal-grid { width: 100%; }
-  .cd { min-height: 32px; font-size: 12px; }
+  .cd { min-height: 36px; font-size: 12px; aspect-ratio: auto; padding: 4px 2px; }
 
-  /* Contenedor apilado visible en móvil */
-  .col-cal-tasks {
-    display: contents; /* los hijos participan en el grid normal */
-  }
+  /* col-cal-tasks: bloque normal en móvil */
+  .col-cal-tasks { display: block; height: auto; }
+
+  /* Tareas: visible completo en móvil, sin drawer */
   .col-tasks.tasks-collapsed,
-  .col-tasks.tasks-expanded { flex-basis: auto; }
-  .col-tasks-arrow { display: none; }
-  .col-legacy-tasks { display: none; }
+  .col-tasks.tasks-expanded { flex-basis: auto; height: auto; overflow: visible; }
+  .col-tasks-arrow           { display: none; }
+
+  /* Popup de clima: posicionar respecto al borde izquierdo */
+  #weatherPopup { left: 62px; bottom: auto; top: 70px; max-height: 85vh; overflow-y: auto; }
+
+  /* Sidebar en móvil: altura mínima, items alineados verticalmente */
+  .sidebar { padding: 0.75rem 0; }
 }
 </style>
 </head>
@@ -897,7 +933,7 @@ button svg, button svg use { pointer-events: none; }
 <div id="dayPopup" class="popup-base">
   <div class="dp-hdr">
     <span class="dp-date" id="dpDate"></span>
-    <button type="button" class="dp-close" onclick="closeDayPopup()">
+    <button type="button" class="dp-close" onclick="closeDayPopup(event)">
       <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#s-x"/></svg>
     </button>
   </div>
@@ -1483,8 +1519,8 @@ function updateWeatherPopup(temp, cond, hum, daily, ph) {
         <div class="wp-dow">${i===0?'Hoy':DAYS[dt.getDay()]}</div>
         <div class="sdp-ico">${sv(codeIco(daily.weathercode[i]||0),10,10)}</div>
         <div class="wp-ft">${Math.round(daily.temperature_2m_max[i])}°</div>
-        <div class="wp-fr">${daily.precipitation_probability_max[i]||0}%</div>
-        ${typeof hd==='number'?`<div class="wp-fhum">${Math.round(hd)}%HR</div>`:''}
+        ${typeof hd==='number'?`<div class="wp-fhum">${Math.round(hd)}%</div>`:'<div class="wp-fhum">—</div>'}
+        <div class="wp-fr">☂ ${daily.precipitation_probability_max[i]||0}%</div>
       </div>`;
     }
     $('wpForecast').innerHTML = fc;
@@ -2052,12 +2088,17 @@ function showDayPopup(event, ds) {
   setTimeout(() => document.addEventListener('click', closeDayPopupOutside), 50);
 }
 
-function closeDayPopup() {
+function closeDayPopup(evt) {
+  if (evt) evt.stopPropagation();
   document.getElementById('dayPopup').classList.remove('open');
   document.removeEventListener('click', closeDayPopupOutside);
 }
 function closeDayPopupOutside(e) {
-  if (!document.getElementById('dayPopup').contains(e.target)) closeDayPopup();
+  const popup = document.getElementById('dayPopup');
+  if (popup && !popup.contains(e.target)) {
+    popup.classList.remove('open');
+    document.removeEventListener('click', closeDayPopupOutside);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -2134,17 +2175,25 @@ function renderPlantSugg(query) {
 }
 function togglePlantSugg(name) {
   if (name === 'Todas') {
-    selectedPlants = ['Todas'];
+    // Click "Todas" when already selected → deselect (clear)
+    if (selectedPlants.length === 1 && selectedPlants[0] === 'Todas') {
+      selectedPlants = [];
+    } else {
+      selectedPlants = ['Todas'];
+    }
   } else {
+    // Remove "Todas" from selection when picking a specific plant
     selectedPlants = selectedPlants.filter(n => n !== 'Todas');
     if (selectedPlants.includes(name)) {
+      // Deselect this plant
       selectedPlants = selectedPlants.filter(n => n !== name);
     } else {
       selectedPlants.push(name);
     }
-    if (!selectedPlants.length) selectedPlants = ['Todas'];
+    // Do NOT auto-add "Todas" — leave empty if nothing selected
   }
-  document.getElementById('t-plant').value = selectedPlants.join(', ');
+  // Update input: empty if nothing selected, otherwise join names
+  document.getElementById('t-plant').value = selectedPlants.length ? selectedPlants.join(', ') : '';
   renderPlantSugg('');  // re-render full list with updated checkboxes
 }
 
@@ -2188,7 +2237,9 @@ function openEditTask(id) {
 function saveTask() {
   const name     = document.getElementById('t-name').value.trim(); if (!name) return;
   const alarm    = document.getElementById('t-alarm').value;
-  const plantVal = selectedPlants.length ? selectedPlants.join(', ') : (document.getElementById('t-plant').value || 'Todas');
+  // Use typed value if available; fall back to 'Todas' only when saving with nothing selected
+  const typedVal = document.getElementById('t-plant').value.trim();
+  const plantVal = selectedPlants.length ? selectedPlants.join(', ') : (typedVal || 'Todas');
 
   if (editingTaskId) {
     const t = tasks.find(x => x.id === editingTaskId);
