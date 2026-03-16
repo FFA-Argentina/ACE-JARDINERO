@@ -132,7 +132,7 @@ body {
 .panel3 {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 280px 1fr;
+  grid-template-columns: 1fr 1fr;   /* 2 cols: inventario | cal+tareas */
   overflow: hidden;
   border-top: 1px solid var(--rule);
 }
@@ -592,66 +592,118 @@ button svg, button svg use { pointer-events: none; }
    § 1.15  RESPONSIVE
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── DESKTOP (>900px): 2 columnas — Inventario | Cal+Tareas apiladas ── */
+/* ── col-cal-tasks: columna derecha — calendario arriba, tareas abajo ── */
+/* Siempre es un flex column que ocupa el grid-cell completo */
+.col-cal-tasks {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--rule);
+  min-height: 0;
+}
+
+/* Calendario: ocupa la mitad superior con scroll interno */
+.col-cal {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  border-right: none;
+  border-bottom: 1px solid var(--rule);
+}
+.col-cal .col-body {
+  overflow-y: auto;
+  height: 100%;
+  padding: 8px 10px;
+}
+
+/* Tareas: drawer colapsado (desktop) */
+.col-tasks {
+  flex: 0 0 38px;
+  overflow: hidden;
+  border-right: none;
+  transition: flex 0.28s cubic-bezier(.25,.46,.45,.94);
+}
+.col-tasks.tasks-expanded { flex: 0 0 45%; }
+.col-tasks .col-hdr  { cursor: pointer; user-select: none; }
+.col-tasks .col-hdr:hover { background: var(--sf); }
+.col-tasks .col-body { overflow-y: auto; }
+.col-tasks-arrow {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink3); transition: transform 0.22s; flex-shrink: 0;
+}
+.col-tasks-arrow svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.tasks-expanded .col-tasks-arrow { transform: rotate(180deg); }
+
+/* ── DESKTOP (>900px) ── */
 @media (min-width: 901px) {
+  html, body { height: 100%; overflow: hidden; }
+  .app  { height: 100vh; overflow: hidden; flex-direction: row; }
+  .main { overflow: hidden; }
+  .sec.active { display: flex; }
+  .panel3 { grid-template-columns: 1fr 1fr; overflow: hidden; }
+  .col-inv { overflow: hidden; }
+}
+
+/* ── MOBILE (≤900px): flujo vertical scrolleable ── */
+@media (max-width: 900px) {
+  html, body { height: auto; overflow: auto; }
+  body        { overflow-x: hidden; }
+  .app        { height: auto; min-height: 100vh; overflow: visible; flex-direction: column; }
+  .main       { overflow: visible; height: auto; }
+  .sec.active { display: block; overflow: visible; height: auto; }
+
+  /* Panel: columna única */
   .panel3 {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
-  }
-  /* Col 1 = Inventario (ocupa toda la altura) */
-  .col-inv { grid-column: 1; grid-row: 1; }
-
-  /* Col 2 = contenedor flex vertical: calendario arriba + tareas desplegable abajo */
-  .col-cal-tasks {
-    grid-column: 2; grid-row: 1;
-    display: flex; flex-direction: column;
-    overflow: hidden;
-    border-left: 1px solid var(--rule);
+    display: block;
+    overflow: visible;
+    height: auto;
+    grid-template-columns: 1fr;
   }
 
-  /* Bloque calendario: mitad superior */
-  .col-cal {
-    flex: 1 1 0;
-    min-height: 0;
-    overflow: hidden;          /* critical: enables flex child to take bounded height */
+  /* Columnas apiladas */
+  .col, .col-cal, .col-inv {
     border-right: none;
     border-bottom: 1px solid var(--rule);
+    overflow: visible;
+    height: auto;
+    max-height: none;
+    flex: none;
+    min-height: 0;
   }
-  .col-cal .col-body {
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    padding: 8px 10px;
-    height: 100%;
+  .col-body, .col-cal .col-body {
+    overflow: visible;
+    height: auto;
+    max-height: none;
   }
+  .cal-grid { width: 100%; }
+  .cd { min-height: 36px; font-size: 12px; aspect-ratio: auto; padding: 4px 2px; }
 
-  /* Bloque tareas: altura colapsada por defecto, se expande al clic */
-  .col-tasks {
-    flex: 0 0 auto;
-    border-right: none;
-    overflow: hidden;
-    transition: flex-basis 0.28s cubic-bezier(.25,.46,.45,.94);
-  }
-  .col-tasks.tasks-collapsed { flex-basis: 38px; }
-  .col-tasks.tasks-expanded  { flex-basis: 45%; }
-  .col-tasks .col-hdr {
-    cursor: pointer;
-    user-select: none;
-  }
-  .col-tasks .col-hdr:hover { background: var(--sf); }
-  .col-tasks-arrow {
-    width: 16px; height: 16px;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--ink3);
-    transition: transform 0.22s;
-    flex-shrink: 0;
-  }
-  .col-tasks-arrow svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
-  .tasks-expanded .col-tasks-arrow { transform: rotate(180deg); }
-  .col-tasks .col-body { overflow-y: auto; }
+  /* col-cal-tasks: bloque normal en móvil */
+  .col-cal-tasks { display: block; border-left: none; border-top: 1px solid var(--rule); height: auto; overflow: visible; }
 
-  /* Ocultar col-3 legacy (usamos col-cal-tasks en su lugar) */
-  .col-legacy-tasks { display: none; }
+  /* Tareas: sin drawer en móvil */
+  .col-tasks { flex: none; height: auto; overflow: visible; }
+  .col-tasks.tasks-expanded { flex: none; }
+  .col-tasks-arrow { display: none; }
+
+  /* Sidebar horizontal en móvil */
+  .sidebar {
+    width: 100%; height: auto;
+    flex-direction: row; align-items: center;
+    padding: 0 12px; gap: 4px;
+    border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0; position: sticky; top: 0; z-index: 300;
+  }
+  .sidebar .s-logo { margin-bottom: 0; margin-right: 8px; }
+  .sidebar .nb     { margin-bottom: 0; }
+  .sidebar .nb-tip { display: none; }
+  .nb-weather {
+    flex-direction: row; gap: 5px; margin-bottom: 0;
+    margin-left: auto; padding: 5px 10px; width: auto; border-radius: 20px;
+  }
+  .nb-weather-moon { font-size: 11px; }
+  #weatherPopup { left: auto; right: 8px; bottom: auto; top: 52px; width: min(300px, calc(100vw - 16px)); }
 }
 
 /* ── MOBILE (≤900px): flujo vertical, scroll nativo del documento ── */
@@ -849,10 +901,10 @@ button svg, button svg use { pointer-events: none; }
     <div class="hdr-title">Ayudante de Jardinería</div>
     <div class="hdr-date" id="hdrDate"></div>
   </div>
-  <div class="hdr-geo" onclick="requestGeo()">
-    <div class="geo-dot"></div>
+  <div class="hdr-geo" onclick="requestGeo()" id="hdrGeo" title="Clic para actualizar ubicación">
+    <div class="geo-dot" id="geoDot"></div>
     <svg viewBox="0 0 24 24" width="9" height="9"><use href="#s-pin"/></svg>
-    <span id="geoLabel">Obteniendo ubicación...</span>
+    <span id="geoLabel">Detectar ubicación</span>
   </div>
 </header>
 
@@ -884,9 +936,9 @@ button svg, button svg use { pointer-events: none; }
             </div>
             <div>
               <div class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                <svg><use href="#s-cam"/></svg>Foto
+                <svg><use href="#s-cam"/></svg>Foto / Carrete
               </div>
-              <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="identifyPlant(this)">
+              <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="identifyPlant(this)">
             </div>
           </div>
           <div id="id-loading" style="display:none;align-items:center;gap:7px;padding:6px 0;font-family:'Barlow Condensed',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);">
@@ -1069,7 +1121,7 @@ button svg, button svg use { pointer-events: none; }
             <span>Agregar foto</span>
           </div>
           <img id="mPhotoImg" src="" style="display:none;width:100%;height:100%;object-fit:cover;">
-          <input type="file" id="mPhotoIn" accept="image/*" capture="environment" class="mph-input" onchange="handleMPhoto(this)">
+          <input type="file" id="mPhotoIn" accept="image/*" class="mph-input" onchange="handleMPhoto(this)">
         </div>
         <div id="mIdBar" style="display:none;background:rgba(51,77,40,0.09);border:1px solid rgba(107,143,94,0.25);border-top:none;border-radius:0 0 3px 3px;padding:6px 10px;align-items:center;justify-content:space-between;gap:8px;">
           <div id="mIdResult" style="flex:1;font-size:11px;color:var(--moss);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.02em;"></div>
@@ -1585,25 +1637,51 @@ function switchInvTab(tab, el) {
    ───────────────────────────────────────────────────────────────── */
 /* WEATHER_SVG moved to §3.3 UTILS */
 
+function setGeoLabel(t) {
+  document.getElementById('geoLabel').textContent = t;
+}
+function setGeoDot(active) {
+  const dot = document.getElementById('geoDot');
+  if (dot) dot.style.background = active ? 'var(--sage)' : 'var(--amber)';
+}
+
 function requestGeo() {
-  if (!navigator.geolocation) { setGeoLabel('Sin GPS'); loadWeather(-34.6037, -58.3816); return; }
+  if (!navigator.geolocation) {
+    setGeoLabel('Sin GPS — Buenos Aires');
+    setGeoDot(false);
+    loadWeather(-34.6037, -58.3816);
+    return;
+  }
+  setGeoLabel('Obteniendo ubicación...');
+  setGeoDot(true);
   navigator.geolocation.getCurrentPosition(
-    p => { loadWeather(p.coords.latitude, p.coords.longitude); revGeo(p.coords.latitude, p.coords.longitude); },
-    ()  => { loadWeather(-34.6037, -58.3816); setGeoLabel('Buenos Aires, AR'); },
-    { timeout: 8000 }
+    pos => {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      loadWeather(lat, lon);
+      revGeo(lat, lon);
+    },
+    err => {
+      // Geolocation denied or unavailable — use Buenos Aires as default
+      setGeoLabel('Buenos Aires, AR');
+      setGeoDot(false);
+      loadWeather(-34.6037, -58.3816);
+    },
+    { timeout: 10000, maximumAge: 300000, enableHighAccuracy: false }
   );
 }
 
-function setGeoLabel(t) { document.getElementById('geoLabel').textContent = t; }
-
 function revGeo(lat, lon) {
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`)
     .then(r => r.json())
     .then(d => {
-      const c  = d.address?.city || d.address?.town || d.address?.village || '';
-      const st = d.address?.state || '';
-      setGeoLabel(c + (st ? ', ' + st.split(' ')[0] : ''));
-    }).catch(() => {});
+      const addr = d.address || {};
+      const city = addr.city || addr.town || addr.village || addr.municipality || '';
+      const state = addr.state || '';
+      const label = city ? city + (state ? ', ' + state.replace(/\s+Provincia.*$/i,'').trim() : '') : (state || 'Mi ubicación');
+      setGeoLabel(label);
+      setGeoDot(true);
+    })
+    .catch(() => setGeoLabel('Mi ubicación'));
 }
 
 function loadWeather(lat, lon) {
