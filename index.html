@@ -1376,6 +1376,13 @@ button svg, button svg use { pointer-events: none; }
 <script>
 'use strict';
 
+/** Devuelve fecha YYYY-MM-DD relativa a hoy (n=0 hoy, n=-1 ayer, n=1 mañana) */
+function dStr(n) {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+
 /* ─────────────────────────────────────────────────────────────────
    § 3.1  CONFIG — constantes y datos iniciales de ejemplo
    Para cambiar datos de muestra: editar el array SAMPLE_*.
@@ -1411,25 +1418,7 @@ const MOON_RECS   = {
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const AI_MODEL= 'claude-sonnet-4-5';
 
-/* Datos de ejemplo (se reemplazan con los del usuario) */
-const SAMPLE_PLANTS = [
-  { id:1, name:'Pothos dorado',  species:'Epipremnum aureum',   waterDays:7,  loc:'Interior — luz indirecta', sustrato:'Universal + perlita',  fert:'', fertRemind:false, luz:'Media — luz indirecta', notes:'Muy resistente. Hojas variegadas.', treat:false, prob:'', treatType:'', treatNotes:'', photo:'', events:[] },
-  { id:2, name:'Suculenta rosa', species:'Echeveria elegans',   waterDays:14, loc:'Balcón — sol directo',      sustrato:'Sustrato cactáceas',   fert:'', fertRemind:false, luz:'Alta — sol directo',      notes:'No regar en exceso.', treat:false, prob:'', treatType:'', treatNotes:'', photo:'', events:[] },
-  { id:3, name:'Helecho boston', species:'Nephrolepis exaltata',waterDays:3,  loc:'Interior — poca luz',       sustrato:'Universal + turba',    fert:'', fertRemind:false, luz:'Baja — poca luz',         notes:'Le gusta la humedad ambiental.', treat:true, prob:'Cochinilla de raíz', treatType:'Neem semanal', treatNotes:'Inicio hace 2 semanas. Mejorando.', photo:'', events:[
-    { date:dStr(2), txt:'Revisión raíces', type:'p' },
-    { date:dStr(7), txt:'Aplicar neem',    type:'t' },
-  ]},
-];
-const SAMPLE_TASKS = [
-  { id:1, name:'Regar todas las plantas', type:'r', date:dStr(0),  plant:'Todas',         done:false, alarm:'' },
-  { id:2, name:'Fertilizar pothos',       type:'a', date:dStr(7),  plant:'Pothos dorado', done:false, alarm:'1d' },
-  { id:3, name:'Aplicar neem helecho',    type:'t', date:dStr(-2), plant:'Helecho boston',done:false, alarm:'same' },
-];
-const SAMPLE_SUPPLIES = [
-  { id:1, name:'Tierra universal',   qty:5, unit:'kg',      status:'ok',  reminder:'' },
-  { id:2, name:'Neem oil',           qty:1, unit:'L',       status:'low', reminder:'Comprar antes del próximo tratamiento' },
-  { id:3, name:'Fertilizante líquido',qty:0, unit:'unidades',status:'out', reminder:'Urgente para la próxima fertilización' },
-];
+/* SAMPLE data moved below — see § 3.2 STATE */
 
 /* ─────────────────────────────────────────────────────────────────
    § 3.2  STATE — variables de estado de la aplicación
@@ -1460,12 +1449,7 @@ let weatherPopupOpen = false;
    § 3.3  UTILS — helpers reutilizables
    ───────────────────────────────────────────────────────────────── */
 
-/** Devuelve fecha YYYY-MM-DD relativa a hoy (n=0 hoy, n=-1 ayer, n=1 mañana) */
-function dStr(n) {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString().split('T')[0];
-}
+/* dStr moved to top */
 
 /** Genera un <svg> inline con el ícono dado */
 function sv(id, w, h, col) {
@@ -1564,6 +1548,27 @@ function updateSidebarWeather(temp, moonMark, icoId, hum) {
   if (h)   h.textContent = (hum !== undefined && hum !== null) ? hum + '%' : '--%';
   if (ico) ico.innerHTML = WEATHER_SVG[weatherIcoKey(icoId)] || WEATHER_SVG.clear;
 }
+
+/* Datos de ejemplo (se reemplazan con los del usuario) */
+const SAMPLE_PLANTS = [
+  { id:1, name:'Pothos dorado',  species:'Epipremnum aureum',   waterDays:7,  loc:'Interior — luz indirecta', sustrato:'Universal + perlita',  fert:'', fertRemind:false, luz:'Media — luz indirecta', notes:'Muy resistente. Hojas variegadas.', treat:false, prob:'', treatType:'', treatNotes:'', photo:'', events:[] },
+  { id:2, name:'Suculenta rosa', species:'Echeveria elegans',   waterDays:14, loc:'Balcón — sol directo',      sustrato:'Sustrato cactáceas',   fert:'', fertRemind:false, luz:'Alta — sol directo',      notes:'No regar en exceso.', treat:false, prob:'', treatType:'', treatNotes:'', photo:'', events:[] },
+  { id:3, name:'Helecho boston', species:'Nephrolepis exaltata',waterDays:3,  loc:'Interior — poca luz',       sustrato:'Universal + turba',    fert:'', fertRemind:false, luz:'Baja — poca luz',         notes:'Le gusta la humedad ambiental.', treat:true, prob:'Cochinilla de raíz', treatType:'Neem semanal', treatNotes:'Inicio hace 2 semanas. Mejorando.', photo:'', events:[
+    { date:dStr(2), txt:'Revisión raíces', type:'p' },
+    { date:dStr(7), txt:'Aplicar neem',    type:'t' },
+  ]},
+];
+const SAMPLE_TASKS = [
+  { id:1, name:'Regar todas las plantas', type:'r', date:dStr(0),  plant:'Todas',         done:false, alarm:'' },
+  { id:2, name:'Fertilizar pothos',       type:'a', date:dStr(7),  plant:'Pothos dorado', done:false, alarm:'1d' },
+  { id:3, name:'Aplicar neem helecho',    type:'t', date:dStr(-2), plant:'Helecho boston',done:false, alarm:'same' },
+];
+const SAMPLE_SUPPLIES = [
+  { id:1, name:'Tierra universal',   qty:5, unit:'kg',      status:'ok',  reminder:'' },
+  { id:2, name:'Neem oil',           qty:1, unit:'L',       status:'low', reminder:'Comprar antes del próximo tratamiento' },
+  { id:3, name:'Fertilizante líquido',qty:0, unit:'unidades',status:'out', reminder:'Urgente para la próxima fertilización' },
+];
+
 
 /* ─────────────────────────────────────────────────────────────────
    § 3.4  INIT — arranque y configuración inicial
