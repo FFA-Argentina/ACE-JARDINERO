@@ -499,6 +499,14 @@ body {
 }
 .popup-base.open { display: block; }
 
+/* Overlay transparente detrás del popup de día */
+#dayOverlay {
+  position: fixed; inset: 0;
+  z-index: 790;
+  display: none;
+}
+#dayOverlay.open { display: block; }
+
 /* Popup de detalle de día */
 #dayPopup        { width: 220px; padding: 0; z-index: 800; }
 .dp-hdr          { padding: 8px 10px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
@@ -993,11 +1001,14 @@ button svg, button svg use { pointer-events: none; }
      § 2.6  POPUPS FLOTANTES
      ═══════════════════════════════════════════════════════════════════ -->
 
+<!-- Overlay para cerrar popup de día al click fuera -->
+<div id="dayOverlay" onclick="closeDayPopup()"></div>
+
 <!-- Popup: Detalle de día en calendario -->
 <div id="dayPopup" class="popup-base">
   <div class="dp-hdr">
     <span class="dp-date" id="dpDate"></span>
-    <button type="button" class="dp-close" onclick="closeDayPopup(event)">
+    <button type="button" class="dp-close" onclick="closeDayPopup()">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
@@ -1346,7 +1357,7 @@ const MOON_RECS   = {
   'Cuarto menguante': 'Aplicá tratamientos contra plagas.',
 };
 const API_URL = 'https://api.anthropic.com/v1/messages';
-const AI_MODEL= 'claude-sonnet-4-20250514';
+const AI_MODEL= 'claude-sonnet-4-5';
 
 /* Datos de ejemplo (se reemplazan con los del usuario) */
 const SAMPLE_PLANTS = [
@@ -1838,43 +1849,65 @@ async function identifyFromModal() {
   const res  = document.getElementById('mIdResult');
   btn.disabled = true;
   res.innerHTML = '<span class="spin"></span> Identificando...';
-  const reader = new FileReader();
-  reader.onload = async e => {
-    const b64 = e.target.result.split(',')[1], mt = file.type || 'image/jpeg';
-    try {
-      const r = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({
-          model: AI_MODEL, max_tokens: 500,
-          messages: [{ role:'user', content:[
-            { type:'image', source:{ type:'base64', media_type:mt, data:b64 } },
-            { type:'text',  text:'Identificá esta planta. Respondé SOLO JSON sin markdown: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}. riego_dias: número entero de días entre riegos. Cuidados: máx 15 palabras.' }
-          ]}]
-        })
-      });
-      const data = await r.json();
-      const raw  = data.content.map(c => c.text || '').join('');
-      const pl   = JSON.parse(raw.replace(/```json|```/g, '').trim());
-      // Rellenar campos del formulario con los datos identificados
-      if (pl.nombre_comun  && !document.getElementById('f-name').value)  document.getElementById('f-name').value    = pl.nombre_comun;
-      if (pl.nombre_cientifico) document.getElementById('f-species').value = pl.nombre_cientifico;
-      if (pl.riego_dias)   { drumIdx = drumDaysToIdx(pl.riego_dias); renderDrum(); }
-      if (pl.luz) {
-        const luzMap = { alta:'Alta — sol directo', media:'Media — luz indirecta', baja:'Baja — poca luz' };
-        const k = Object.keys(luzMap).find(k => pl.luz.toLowerCase().includes(k));
-        if (k) document.getElementById('f-luz').value = luzMap[k];
-      }
-      if (pl.cuidados && !document.getElementById('f-notes').value) document.getElementById('f-notes').value = pl.cuidados;
-      res.textContent = '✓ ' + pl.nombre_comun + ' / ' + pl.nombre_cientifico;
-      res.style.color = 'var(--sage-lt)';
-    } catch (err) {
-      res.textContent = 'No se pudo identificar. Usá una foto más nítida.';
-      res.style.color = 'rgba(168,194,153,0.5)';
+
+  try {
+    const b64 = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload  = e => resolve(e.target.result.split(',')[1]);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+    const mt = file.type || 'image/jpeg';
+
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
+            { type: 'text',  text: 'Identificá esta planta. Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin markdown, sin bloques de código. Formato exacto: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}' }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+
+    const raw = data.content.map(c => c.text || '').join('').trim();
+    const pl  = JSON.parse(raw.replace(/^```[a-z]*
+?/,'').replace(/```$/,'').trim());
+
+    if (pl.nombre_comun  && !document.getElementById('f-name').value)
+      document.getElementById('f-name').value = pl.nombre_comun;
+    if (pl.nombre_cientifico)
+      document.getElementById('f-species').value = pl.nombre_cientifico;
+    if (pl.riego_dias) { drumIdx = drumDaysToIdx(pl.riego_dias); renderDrum(); }
+    if (pl.luz) {
+      const luzMap = { alta:'Alta — sol directo', media:'Media — luz indirecta', baja:'Baja — poca luz' };
+      const k = Object.keys(luzMap).find(k => pl.luz.toLowerCase().includes(k));
+      if (k) document.getElementById('f-luz').value = luzMap[k];
     }
-    btn.disabled = false;
-  };
-  reader.readAsDataURL(file);
+    if (pl.cuidados && !document.getElementById('f-notes').value)
+      document.getElementById('f-notes').value = pl.cuidados;
+
+    res.textContent = '✓ ' + (pl.nombre_comun || '') + ' / ' + (pl.nombre_cientifico || '');
+    res.style.color = 'var(--sage-lt)';
+
+  } catch (err) {
+    console.error('identifyFromModal error:', err);
+    res.textContent = 'Error: ' + err.message.slice(0, 80);
+    res.style.color = 'rgba(168,194,153,0.5)';
+  }
+  btn.disabled = false;
 }
 
 /* ── Identificación IA desde barra lateral (inventario) ── */
@@ -1882,37 +1915,66 @@ async function identifyPlant(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
   const ld   = document.getElementById('id-loading');
+  const resBox = document.getElementById('resBox');
   ld.style.display = 'flex';
-  document.getElementById('resBox').style.display = 'none';
-  const reader = new FileReader();
-  reader.onload = async e => {
-    const b64 = e.target.result.split(',')[1], mt = file.type || 'image/jpeg';
-    try {
-      const r = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({
-          model: AI_MODEL, max_tokens: 500,
-          messages: [{ role:'user', content:[
-            { type:'image', source:{ type:'base64', media_type:mt, data:b64 } },
-            { type:'text',  text:'Identificá esta planta. Respondé SOLO JSON sin markdown: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}. riego_dias: número entero de días entre riegos. Cuidados: máx 15 palabras.' }
-          ]}]
-        })
-      });
-      const data = await r.json();
-      const pl   = JSON.parse(data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim());
-      identifiedData = pl;
-      document.getElementById('resName').textContent   = pl.nombre_comun + ' / ' + pl.nombre_cientifico;
-      document.getElementById('resDetail').textContent = 'Riego: cada ' + pl.riego_dias + ' días · Luz: ' + pl.luz;
-      document.getElementById('resCare').textContent   = pl.cuidados;
-      document.getElementById('resBox').style.display  = 'block';
-    } catch (err) {
-      document.getElementById('resBox').innerHTML = '<p style="font-size:11px;color:var(--ink3);">No se pudo identificar. Usá foto más nítida.</p>';
-      document.getElementById('resBox').style.display = 'block';
+  resBox.style.display = 'none';
+
+  // Convert to base64
+  const b64 = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = e => res(e.target.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+  const mt = file.type || 'image/jpeg';
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
+            { type: 'text',  text: 'Identificá esta planta. Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin markdown, sin bloques de código. Formato exacto: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}' }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error('HTTP ' + resp.status + ': ' + errText.slice(0,200));
     }
-    ld.style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+    const raw = data.content.map(c => c.text || '').join('').trim();
+    // Strip any accidental markdown fences
+    const clean = raw.replace(/^```[a-z]*
+?/,'').replace(/```$/,'').trim();
+    const pl = JSON.parse(clean);
+
+    identifiedData = pl;
+    document.getElementById('resName').textContent   = (pl.nombre_comun || '?') + ' / ' + (pl.nombre_cientifico || '?');
+    document.getElementById('resDetail').textContent = 'Riego: cada ' + (pl.riego_dias || '?') + ' días · Luz: ' + (pl.luz || '?');
+    document.getElementById('resCare').textContent   = pl.cuidados || '';
+    resBox.style.display = 'block';
+
+  } catch (err) {
+    console.error('identifyPlant error:', err);
+    resBox.innerHTML = '<p style="font-size:11px;color:var(--ink3);">Error: ' + err.message.slice(0, 120) + '</p>';
+    resBox.style.display = 'block';
+  }
+
+  ld.style.display = 'none';
 }
 
 function addFromIdentify() {
@@ -2185,25 +2247,12 @@ function showDayPopup(event, ds) {
   popup.style.left = Math.max(8, left) + 'px';
   popup.style.top  = Math.max(8, top)  + 'px';
   popup.classList.add('open');
-  setTimeout(() => document.addEventListener('click', closeDayPopupOutside), 50);
+  document.getElementById('dayOverlay').classList.add('open');
 }
 
-let _dayPopupClosing = false;
-function closeDayPopup(evt) {
-  if (evt) { evt.stopPropagation(); evt.preventDefault(); }
-  _dayPopupClosing = true;
+function closeDayPopup() {
   document.getElementById('dayPopup').classList.remove('open');
-  document.removeEventListener('click', closeDayPopupOutside);
-  // Reset flag after current event cycle
-  setTimeout(() => { _dayPopupClosing = false; }, 0);
-}
-function closeDayPopupOutside(e) {
-  if (_dayPopupClosing) return;
-  const popup = document.getElementById('dayPopup');
-  if (popup && !popup.contains(e.target)) {
-    popup.classList.remove('open');
-    document.removeEventListener('click', closeDayPopupOutside);
-  }
+  document.getElementById('dayOverlay').classList.remove('open');
 }
 
 /* ─────────────────────────────────────────────────────────────────
