@@ -534,6 +534,11 @@ body {
 .wp-fhum           { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 500; color: rgba(120,200,220,0.9); margin-top: 2px; }
 /* Precipitación: dato secundario (menor tamaño, más tenue) */
 .wp-fr             { font-family: 'Barlow Condensed', sans-serif; font-size: 8px; color: rgba(168,194,153,0.4); margin-top: 0; }
+/* Ícono de clima dentro de cada card del pronóstico */
+.wp-wico           { display: flex; align-items: center; justify-content: center; margin: 2px 0; }
+.wp-wico svg       { width: 13px; height: 13px; stroke: rgba(168,194,153,0.65); fill: none; }
+/* Fase lunar por día */
+.wp-fmoon          { font-size: 10px; margin-top: 2px; line-height: 1; }
 .wp-moon-sec       { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 8px; }
 .wp-moon-title     { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(168,194,153,0.5); margin-bottom: 6px; }
 .wp-moon-row       { display: flex; align-items: center; gap: 8px; }
@@ -595,22 +600,25 @@ button svg, button svg use { pointer-events: none; }
   /* Col 2 = contenedor flex vertical: calendario arriba + tareas desplegable abajo */
   .col-cal-tasks {
     grid-column: 2; grid-row: 1;
-    display: flex; flex-direction: column; overflow: hidden;
-    border-right: none;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    border-left: 1px solid var(--rule);
   }
 
   /* Bloque calendario: mitad superior */
   .col-cal {
     flex: 1 1 0;
     min-height: 0;
+    overflow: hidden;          /* critical: enables flex child to take bounded height */
     border-right: none;
     border-bottom: 1px solid var(--rule);
   }
   .col-cal .col-body {
-    overflow: visible;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     padding: 8px 10px;
+    height: 100%;
   }
 
   /* Bloque tareas: altura colapsada por defecto, se expande al clic */
@@ -994,7 +1002,9 @@ button svg, button svg use { pointer-events: none; }
   <div class="dp-hdr">
     <span class="dp-date" id="dpDate"></span>
     <button type="button" class="dp-close" onclick="closeDayPopup(event)">
-      <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#s-x"/></svg>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
     </button>
   </div>
   <div class="dp-body" id="dpBody"></div>
@@ -1500,6 +1510,35 @@ function switchInvTab(tab, el) {
 /* ─────────────────────────────────────────────────────────────────
    § 3.6  WEATHER — clima, geolocalización y fase lunar
    ───────────────────────────────────────────────────────────────── */
+// Inline SVG paths for sidebar weather icon — sobrio, stroke-only, 14×14
+const WEATHER_SVG = {
+  clear:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7.1" y2="7.1"/><line x1="16.9" y1="16.9" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="7.1" y2="16.9"/><line x1="16.9" y1="7.1" x2="19.1" y2="4.9"/></svg>',
+  partial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M2 10h2M5.6 5.6l1.4 1.4"/><path d="M18 14a5 5 0 00-9.9-1H6a4 4 0 000 8h12a3 3 0 000-6z"/></svg>',
+  cloudy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 17a4 4 0 000-8h-1.3A7 7 0 104 17h16z"/></svg>',
+  rain:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 15a4 4 0 000-8h-1.3A7 7 0 104 15h16z"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="16" y1="19" x2="16" y2="21"/></svg>',
+  fog:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h18M3 12h18M3 16h12"/></svg>',
+};
+
+function weatherIcoKey(icoId) {
+  if (!icoId) return 'clear';
+  if (icoId === 's-sun')   return 'clear';
+  if (icoId === 's-cs')    return 'partial';
+  if (icoId === 's-cloud') return 'cloudy';
+  if (icoId === 's-rain')  return 'rain';
+  return 'fog';
+}
+
+function updateSidebarWeather(temp, moonMark, icoId, hum) {
+  const t   = document.getElementById('swTemp');
+  const m   = document.getElementById('swMoon');
+  const h   = document.getElementById('swHum');
+  const ico = document.getElementById('swIco');
+  if (t)   t.textContent   = (temp !== '--') ? temp + '°' : '--°';
+  if (m)   m.textContent   = moonMark || '●';
+  if (h)   h.textContent   = (hum !== undefined && hum !== null) ? hum + '%' : '--%';
+  if (ico) ico.innerHTML   = WEATHER_SVG[weatherIcoKey(icoId)] || WEATHER_SVG.clear;
+}
+
 function requestGeo() {
   if (!navigator.geolocation) { setGeoLabel('Sin GPS'); loadWeather(-34.6037, -58.3816); return; }
   navigator.geolocation.getCurrentPosition(
@@ -1541,34 +1580,7 @@ function loadWeather(lat, lon) {
     });
 }
 
-// Inline SVG paths for sidebar weather icon — sobrio, stroke-only, 14×14
-const WEATHER_SVG = {
-  clear:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7.1" y2="7.1"/><line x1="16.9" y1="16.9" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="7.1" y2="16.9"/><line x1="16.9" y1="7.1" x2="19.1" y2="4.9"/></svg>',
-  partial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M2 10h2M5.6 5.6l1.4 1.4"/><path d="M18 14a5 5 0 00-9.9-1H6a4 4 0 000 8h12a3 3 0 000-6z"/></svg>',
-  cloudy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 17a4 4 0 000-8h-1.3A7 7 0 104 17h16z"/></svg>',
-  rain:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 15a4 4 0 000-8h-1.3A7 7 0 104 15h16z"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="16" y1="19" x2="16" y2="21"/></svg>',
-  fog:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h18M3 12h18M3 16h12"/></svg>',
-};
 
-function weatherIcoKey(icoId) {
-  if (!icoId) return 'clear';
-  if (icoId === 's-sun')   return 'clear';
-  if (icoId === 's-cs')    return 'partial';
-  if (icoId === 's-cloud') return 'cloudy';
-  if (icoId === 's-rain')  return 'rain';
-  return 'fog';
-}
-
-function updateSidebarWeather(temp, moonMark, icoId, hum) {
-  const t   = document.getElementById('swTemp');
-  const m   = document.getElementById('swMoon');
-  const h   = document.getElementById('swHum');
-  const ico = document.getElementById('swIco');
-  if (t)   t.textContent   = (temp !== '--') ? temp + '°' : '--°';
-  if (m)   m.textContent   = moonMark || '●';
-  if (h)   h.textContent   = (hum !== undefined && hum !== null) ? hum + '%' : '--%';
-  if (ico) ico.innerHTML   = WEATHER_SVG[weatherIcoKey(icoId)] || WEATHER_SVG.clear;
-}
 
 function updateWeatherPopup(temp, cond, hum, daily, ph) {
   const $ = id => document.getElementById(id);
@@ -1586,19 +1598,23 @@ function updateWeatherPopup(temp, cond, hum, daily, ph) {
   else               rec = 'Condiciones favorables para regar y revisar las plantas.';
   if ($('wpRec')) $('wpRec').textContent = rec;
 
-  // Pronóstico 5 días
+  // Pronóstico 5 días con fase lunar por día
   if (daily && $('wpForecast')) {
     const DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
     let fc = '';
     for (let i = 0; i < 5; i++) {
-      const dt  = new Date(daily.time[i] + 'T12:00:00');
-      const hd  = daily.relative_humidity_2m_mean ? daily.relative_humidity_2m_mean[i] : '';
+      const dt   = new Date(daily.time[i] + 'T12:00:00');
+      const hd   = daily.relative_humidity_2m_mean ? daily.relative_humidity_2m_mean[i] : '';
+      const moon = getLunar(dt);
+      const icoKey = weatherIcoKey(codeIco(daily.weathercode[i]||0));
+      const icoSvg = WEATHER_SVG[icoKey] || WEATHER_SVG.clear;
       fc += `<div class="wp-fd">
         <div class="wp-dow">${i===0?'Hoy':DAYS[dt.getDay()]}</div>
-        <div class="sdp-ico">${sv(codeIco(daily.weathercode[i]||0),10,10)}</div>
+        <div class="wp-wico">${icoSvg}</div>
         <div class="wp-ft">${Math.round(daily.temperature_2m_max[i])}°</div>
         ${typeof hd==='number'?`<div class="wp-fhum">${Math.round(hd)}%</div>`:'<div class="wp-fhum">—</div>'}
-        <div class="wp-fr">☂ ${daily.precipitation_probability_max[i]||0}%</div>
+        <div class="wp-fr">☂${daily.precipitation_probability_max[i]||0}%</div>
+        <div class="wp-fmoon" title="${moon.name}">${MOON_ICONS[moon.name]||'🌑'}</div>
       </div>`;
     }
     $('wpForecast').innerHTML = fc;
@@ -1822,7 +1838,7 @@ async function identifyFromModal() {
     try {
       const r = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
           model: AI_MODEL, max_tokens: 500,
           messages: [{ role:'user', content:[
@@ -1868,7 +1884,7 @@ async function identifyPlant(input) {
     try {
       const r = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
           model: AI_MODEL, max_tokens: 500,
           messages: [{ role:'user', content:[
