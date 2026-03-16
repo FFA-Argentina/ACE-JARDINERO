@@ -97,14 +97,21 @@
    § 1.2  RESET Y BASE
    ═══════════════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+/* height:100% set in desktop media query below */
 body {
   font-family: 'Barlow', sans-serif;
   font-weight: 400;
   background: var(--bg);
   color: var(--ink);
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  /* overflow is set per breakpoint in §1.15 */
+}
+/* Desktop: fixed viewport, no scroll on body */
+@media (min-width: 901px) {
+  html, body { height: 100%; overflow: hidden; }
+  .app  { height: 100vh; overflow: hidden; }
+  .main { overflow: hidden; }
+  .sec.active { display: flex; }
 }
 /* Evitar zoom automático en iOS */
 @media (max-width: 768px) {
@@ -193,20 +200,27 @@ body {
 }
 .nb:hover .nb-tip { opacity: 1; }
 
-/* Botón clima (fondo de sidebar) */
+/* Botón clima en sidebar — pill compacta arriba de nav-buttons */
 .nb-weather {
-  width: 36px;
+  width: 44px;
   border-radius: 6px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
   cursor: pointer;
-  margin-top: auto;
-  padding: 6px 0;
+  /* Va ANTES de los nav-buttons, no al final */
+  margin-bottom: 10px;
+  padding: 7px 2px;
   transition: background 0.15s;
-  border: none; background: transparent;
+  border: 1px solid rgba(168,194,153,0.15);
+  background: rgba(255,255,255,0.04);
+  flex-shrink: 0;
 }
-.nb-weather:hover       { background: rgba(255,255,255,0.07); }
-.nb-weather-temp        { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 500; color: #fff; line-height: 1; }
-.nb-weather-moon        { font-size: 9px; color: var(--sage-lt); line-height: 1; margin-top: 1px; }
+.nb-weather:hover         { background: rgba(255,255,255,0.10); border-color: rgba(168,194,153,0.3); }
+.nb-weather-temp          { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 500; color: #fff; line-height: 1; }
+.nb-weather-ico           { line-height: 1; display: flex; align-items: center; justify-content: center; }
+.nb-weather-ico svg       { width: 14px; height: 14px; stroke: rgba(168,194,153,0.75); fill: none; }
+.nb-weather-hum           { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; color: rgba(90,143,200,0.8); line-height: 1; }
+.nb-weather-moon          { font-size: 10px; line-height: 1; }
 
 /* ═══════════════════════════════════════════════════════════════════
    § 1.5  HEADER
@@ -328,11 +342,7 @@ body {
 .leg-over     { background: var(--amber-bg); border: 1px solid rgba(122,80,32,0.3); }
 
 /* Calendario: columna sin scroll, tamaño completo */
-#sec-work .panel3 .col:nth-child(2) .col-body {
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-}
+/* override removed — see §1.15 desktop media query */
 
 /* ═══════════════════════════════════════════════════════════════════
    § 1.9  LISTA DE TAREAS
@@ -489,12 +499,22 @@ body {
 }
 .popup-base.open { display: block; }
 
+/* Overlay transparente detrás del popup de día */
+#dayOverlay {
+  position: fixed; inset: 0;
+  z-index: 790;
+  display: none;
+}
+#dayOverlay.open { display: block; }
+
 /* Popup de detalle de día */
-#dayPopup        { width: 220px; padding: 0; }
+#dayPopup        { width: 220px; padding: 0; z-index: 800; }
 .dp-hdr          { padding: 8px 10px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
 .dp-date         { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink); }
-.dp-close        { width: 18px; height: 18px; border: none; background: none; cursor: pointer; color: var(--ink3); display: flex; align-items: center; justify-content: center; padding: 0; }
-.dp-body         { padding: 8px 10px; max-height: 200px; overflow-y: auto; }
+.dp-close        { width: 24px; height: 24px; border: 1px solid var(--rule2); background: var(--sf); border-radius: var(--radius-sm); cursor: pointer; color: var(--ink2); display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; transition: background 0.12s; }
+.dp-close:hover  { background: var(--bg); color: var(--red); }
+.dp-close svg    { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+.dp-body         { padding: 8px 10px; max-height: 220px; overflow-y: auto; }
 .dp-empty        { font-size: 11px; color: var(--ink3); font-style: italic; }
 
 /* Popup de clima (sidebar) */
@@ -514,8 +534,15 @@ body {
 .wp-fd             { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-sm); padding: 5px 3px; text-align: center; }
 .wp-dow            { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: rgba(168,194,153,0.45); margin-bottom: 2px; }
 .wp-ft             { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 300; color: #fff; }
-.wp-fr             { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; color: rgba(90,143,200,0.7); margin-top: 1px; }
-.wp-fhum           { font-family: 'Barlow Condensed', sans-serif; font-size: 8px; color: rgba(168,194,153,0.4); }
+/* Humedad: dato principal (mayor tamaño, color verde-agua destacado) */
+.wp-fhum           { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 500; color: rgba(120,200,220,0.9); margin-top: 2px; }
+/* Precipitación: dato secundario (menor tamaño, más tenue) */
+.wp-fr             { font-family: 'Barlow Condensed', sans-serif; font-size: 8px; color: rgba(168,194,153,0.4); margin-top: 0; }
+/* Ícono de clima dentro de cada card del pronóstico */
+.wp-wico           { display: flex; align-items: center; justify-content: center; margin: 2px 0; }
+.wp-wico svg       { width: 13px; height: 13px; stroke: rgba(168,194,153,0.65); fill: none; }
+/* Fase lunar por día */
+.wp-fmoon          { font-size: 10px; margin-top: 2px; line-height: 1; }
 .wp-moon-sec       { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 8px; }
 .wp-moon-title     { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(168,194,153,0.5); margin-bottom: 6px; }
 .wp-moon-row       { display: flex; align-items: center; gap: 8px; }
@@ -553,6 +580,10 @@ body {
 .sec-inner::-webkit-scrollbar-track { background: transparent; }
 .sec-inner::-webkit-scrollbar-thumb { background: rgba(28,28,23,0.12); border-radius: 2px; }
 
+
+/* Ensure SVG children of buttons don't swallow click events */
+button svg, button svg use { pointer-events: none; }
+
 @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes pulse  { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes spin   { to { transform: rotate(360deg); } }
@@ -560,9 +591,182 @@ body {
 /* ═══════════════════════════════════════════════════════════════════
    § 1.15  RESPONSIVE
    ═══════════════════════════════════════════════════════════════════ */
+
+/* ── DESKTOP (>900px): 2 columnas — Inventario | Cal+Tareas apiladas ── */
+@media (min-width: 901px) {
+  .panel3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+  /* Col 1 = Inventario (ocupa toda la altura) */
+  .col-inv { grid-column: 1; grid-row: 1; }
+
+  /* Col 2 = contenedor flex vertical: calendario arriba + tareas desplegable abajo */
+  .col-cal-tasks {
+    grid-column: 2; grid-row: 1;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    border-left: 1px solid var(--rule);
+  }
+
+  /* Bloque calendario: mitad superior */
+  .col-cal {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;          /* critical: enables flex child to take bounded height */
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+  .col-cal .col-body {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    height: 100%;
+  }
+
+  /* Bloque tareas: altura colapsada por defecto, se expande al clic */
+  .col-tasks {
+    flex: 0 0 auto;
+    border-right: none;
+    overflow: hidden;
+    transition: flex-basis 0.28s cubic-bezier(.25,.46,.45,.94);
+  }
+  .col-tasks.tasks-collapsed { flex-basis: 38px; }
+  .col-tasks.tasks-expanded  { flex-basis: 45%; }
+  .col-tasks .col-hdr {
+    cursor: pointer;
+    user-select: none;
+  }
+  .col-tasks .col-hdr:hover { background: var(--sf); }
+  .col-tasks-arrow {
+    width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink3);
+    transition: transform 0.22s;
+    flex-shrink: 0;
+  }
+  .col-tasks-arrow svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .tasks-expanded .col-tasks-arrow { transform: rotate(180deg); }
+  .col-tasks .col-body { overflow-y: auto; }
+
+  /* Ocultar col-3 legacy (usamos col-cal-tasks en su lugar) */
+  .col-legacy-tasks { display: none; }
+}
+
+/* ── MOBILE (≤900px): flujo vertical, scroll nativo del documento ── */
 @media (max-width: 900px) {
-  .panel3 { grid-template-columns: 1fr; overflow-y: auto; }
-  .col    { border-right: none; border-bottom: 1px solid var(--rule); }
+  /* Permitir que el cuerpo y la app crezcan más allá del viewport */
+  html, body { height: auto; overflow: auto; }
+  body       { overflow-x: hidden; }
+  .app       { height: auto; min-height: 100vh; overflow: visible; }
+  .main      { overflow: visible; height: auto; }
+
+  /* Secciones: bloque normal, sin fixed-height */
+  .sec.active { display: block; overflow: visible; height: auto; }
+
+  /* Panel: una sola columna, bloque natural */
+  .panel3 {
+    display: block;
+    overflow: visible;
+    height: auto;
+  }
+
+  /* Columnas: apiladas, sin overflow oculto */
+  .col {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    overflow: visible;
+    height: auto;
+    max-height: none;
+  }
+  .col-body {
+    overflow: visible;
+    height: auto;
+    max-height: none;
+    padding: 10px 12px;
+  }
+
+  /* Calendario: crecer libremente */
+  .col-cal .col-body {
+    overflow: visible;
+    height: auto;
+    padding: 8px;
+  }
+  .cal-grid { width: 100%; }
+  .cd { min-height: 36px; font-size: 12px; aspect-ratio: auto; padding: 4px 2px; }
+
+  /* col-cal-tasks: bloque normal en móvil */
+  .col-cal-tasks { display: block; height: auto; }
+
+  /* Tareas: visible completo en móvil, sin drawer */
+  .col-tasks.tasks-collapsed,
+  .col-tasks.tasks-expanded { flex-basis: auto; height: auto; overflow: visible; }
+  .col-tasks-arrow           { display: none; }
+
+  /* Popup de clima: posicionar respecto al borde izquierdo */
+  #weatherPopup { left: 62px; bottom: auto; top: 70px; max-height: 85vh; overflow-y: auto; }
+
+  /* ── SIDEBAR MÓVIL: barra horizontal fija en la parte superior ── */
+  .app { flex-direction: column; }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 12px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    gap: 4px;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* Sticky top */
+    position: sticky;
+    top: 0;
+    z-index: 300;
+  }
+
+  /* Logo: menor margen en horizontal */
+  .sidebar .s-logo {
+    margin-bottom: 0;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Nav buttons: sin margen inferior, tamaño fijo */
+  .sidebar .nb {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  /* Tooltip desactivado en móvil (no hay hover) */
+  .sidebar .nb-tip { display: none; }
+
+  /* Pill de clima: en horizontal, compacta, orientada en fila */
+  .nb-weather {
+    flex-direction: row;
+    gap: 5px;
+    margin-bottom: 0;
+    margin-left: auto;   /* empujar a la derecha */
+    padding: 5px 10px;
+    width: auto;
+    border-radius: 20px;
+  }
+  .nb-weather-ico  { display: flex; align-items: center; }
+  .nb-weather-moon { font-size: 11px; }
+  .nb-weather-hum  { font-size: 10px; }
+  .nb-weather-temp { font-size: 13px; }
+
+  /* Popup clima en móvil: ocupa ancho disponible desde la derecha */
+  #weatherPopup {
+    left: auto;
+    right: 8px;
+    bottom: auto;
+    top: 52px;
+    width: min(300px, calc(100vw - 16px));
+  }
 }
 </style>
 </head>
@@ -620,15 +824,20 @@ body {
   <div class="s-logo" onclick="openModal('creditsModal')" title="Créditos">
     <svg width="11" height="11" fill="none" stroke="var(--sage-lt)" stroke-width="1.5"><use href="#s-logo"/></svg>
   </div>
-  <button class="nb active" onclick="nav('work',this)">
+
+  <!-- Pill de clima — posicionada justo debajo del logo, antes de los nav -->
+  <button type="button" class="nb-weather" id="sidebarWeatherBtn" onclick="toggleWeatherPopup()" title="Clima y fase lunar">
+    <div class="nb-weather-temp" id="swTemp">--°</div>
+    <div class="nb-weather-ico" id="swIco"></div>
+    <div class="nb-weather-hum" id="swHum">--%</div>
+    <div class="nb-weather-moon" id="swMoon">●</div>
+  </button>
+
+  <button type="button" class="nb active" onclick="nav('work',this)">
     <svg><use href="#s-grid"/></svg><span class="nb-tip">Inventario &amp; Tareas</span>
   </button>
   <button class="nb" onclick="nav('archive',this)">
     <svg><use href="#s-archive"/></svg><span class="nb-tip">Plantas dadas de baja</span>
-  </button>
-  <button class="nb-weather" id="sidebarWeatherBtn" onclick="toggleWeatherPopup()">
-    <div class="nb-weather-temp" id="swTemp">--°</div>
-    <div class="nb-weather-moon" id="swMoon">●</div>
   </button>
 </aside>
 
@@ -648,11 +857,11 @@ body {
 </header>
 
 <!-- § 2.4  SECCIÓN: INVENTARIO + CALENDARIO + TAREAS -->
-<div id="sec-work" class="sec active" style="overflow:hidden;">
-  <div class="panel3" style="flex:1;overflow:hidden;">
+<div id="sec-work" class="sec active">
+  <div class="panel3" style="flex:1;">
 
     <!-- COL 1: INVENTARIO -->
-    <div class="col">
+    <div class="col col-inv">
       <div class="col-hdr">
         <span class="col-title">Inventario</span>
         <button class="btn btn-primary btn-sm" onclick="openNewPlant()">
@@ -725,38 +934,48 @@ body {
       </div>
     </div>
 
-    <!-- COL 2: CALENDARIO -->
-    <div class="col">
-      <div class="col-hdr">
-        <span class="col-title" id="calMonthTitle"></span>
-        <div class="cal-nav-g">
-          <button onclick="changeMonth(-1)"><svg width="10" height="10"><use href="#s-prev"/></svg></button>
-          <button onclick="changeMonth(1)"><svg width="10" height="10"><use href="#s-next"/></svg></button>
-        </div>
-      </div>
-      <div class="col-body">
-        <div class="cal-dlbls" id="calDLbls"></div>
-        <div class="cal-grid" id="calGrid"></div>
-        <div class="cal-legend">
-          <div class="leg-item"><div class="leg-dot leg-today"></div>Hoy</div>
-          <div class="leg-item"><div class="leg-dot leg-task"></div>Con tareas</div>
-          <div class="leg-item"><div class="leg-dot leg-over"></div>Pendiente vencido</div>
-        </div>
-      </div>
-    </div>
+    <!-- COL 2 (desktop): Calendario arriba + bloque Tareas expandible abajo -->
+    <div class="col-cal-tasks">
 
-    <!-- COL 3: TAREAS -->
-    <div class="col">
-      <div class="col-hdr">
-        <span class="col-title">Tareas</span>
-        <button class="btn btn-primary btn-sm" onclick="openAddTask()">
-          <svg><use href="#s-plus"/></svg>Nueva
-        </button>
+      <!-- Sub-col: CALENDARIO -->
+      <div class="col col-cal">
+        <div class="col-hdr">
+          <span class="col-title" id="calMonthTitle"></span>
+          <div class="cal-nav-g">
+            <button onclick="changeMonth(-1)"><svg width="10" height="10"><use href="#s-prev"/></svg></button>
+            <button onclick="changeMonth(1)"><svg width="10" height="10"><use href="#s-next"/></svg></button>
+          </div>
+        </div>
+        <div class="col-body">
+          <div class="cal-dlbls" id="calDLbls"></div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-legend">
+            <div class="leg-item"><div class="leg-dot leg-today"></div>Hoy</div>
+            <div class="leg-item"><div class="leg-dot leg-task"></div>Con tareas</div>
+            <div class="leg-item"><div class="leg-dot leg-over"></div>Pendiente vencido</div>
+          </div>
+        </div>
       </div>
-      <div class="col-body">
-        <div id="taskList"></div>
+
+      <!-- Sub-col: TAREAS (drawer expandible en desktop, plano en móvil) -->
+      <div class="col col-tasks tasks-collapsed" id="colTasks">
+        <div class="col-hdr" onclick="toggleTasksDrawer()" id="tasksDrawerHdr">
+          <span class="col-title">Tareas</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddTask()">
+              <svg><use href="#s-plus"/></svg>Nueva
+            </button>
+            <div class="col-tasks-arrow" id="tasksArrow">
+              <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="col-body" id="taskListBody">
+          <div id="taskList"></div>
+        </div>
       </div>
-    </div>
+
+    </div><!-- .col-cal-tasks -->
 
   </div>
 </div>
@@ -782,15 +1001,17 @@ body {
      § 2.6  POPUPS FLOTANTES
      ═══════════════════════════════════════════════════════════════════ -->
 
-<!-- Transparent overlay: click outside to close day popup -->
-<div id="dayOverlay" onclick="closeDayPopup()" style="display:none;position:fixed;inset:0;z-index:790;"></div>
+<!-- Overlay para cerrar popup de día al click fuera -->
+<div id="dayOverlay" onclick="closeDayPopup()"></div>
 
 <!-- Popup: Detalle de día en calendario -->
 <div id="dayPopup" class="popup-base">
   <div class="dp-hdr">
     <span class="dp-date" id="dpDate"></span>
     <button type="button" class="dp-close" onclick="closeDayPopup()">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
     </button>
   </div>
   <div class="dp-body" id="dpBody"></div>
@@ -800,7 +1021,7 @@ body {
 <div id="weatherPopup" class="popup-base">
   <div class="wp-hdr">
     <span class="wp-title">Clima &amp; Luna</span>
-    <button class="wp-close" onclick="toggleWeatherPopup()">
+    <button type="button" class="wp-close" onclick="toggleWeatherPopup()">
       <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#s-x"/></svg>
     </button>
   </div>
@@ -836,7 +1057,7 @@ body {
   <div class="modal">
     <div class="mhdr">
       <div class="mtitle" id="mPlantTitle">Nueva planta</div>
-      <button class="mclose" onclick="closePlantModal()"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closePlantModal()"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody">
 
@@ -978,7 +1199,7 @@ body {
   <div class="modal" style="width:min(420px,98vw);">
     <div class="mhdr">
       <div class="mtitle">Dar de baja planta</div>
-      <button class="mclose" onclick="closeModal('retireModal')"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closeModal('retireModal')"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody">
       <div style="font-size:12px;color:var(--ink2);margin-bottom:12px;line-height:1.6;">La planta pasará al repositorio de bajas con la fecha y el motivo indicados.</div>
@@ -1009,7 +1230,7 @@ body {
   <div class="modal task-modal-sm">
     <div class="mhdr">
       <div class="mtitle">Nueva tarea</div>
-      <button class="mclose" onclick="closeModal('taskModal')"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closeModal('taskModal')"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody">
       <div class="fld"><label>Descripción</label><input type="text" id="t-name" placeholder="Ej: Regar todas las plantas"></div>
@@ -1051,7 +1272,7 @@ body {
   <div class="modal" style="width:min(400px,98vw);">
     <div class="mhdr">
       <div class="mtitle">Editar insumo</div>
-      <button class="mclose" onclick="closeModal('supplyEditModal')"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closeModal('supplyEditModal')"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody">
       <div class="fld"><label>Nombre</label><input type="text" id="se-name"></div>
@@ -1082,7 +1303,7 @@ body {
 <div class="modal-bg" id="creditsModal" onclick="if(event.target===this)closeModal('creditsModal')">
   <div class="modal" style="width:min(360px,92vw);text-align:center;">
     <div class="mhdr" style="justify-content:flex-end;border-bottom:none;padding-bottom:0;">
-      <button class="mclose" onclick="closeModal('creditsModal')"><svg><use href="#s-x"/></svg></button>
+      <button type="button" class="mclose" onclick="closeModal('creditsModal')"><svg><use href="#s-x"/></svg></button>
     </div>
     <div class="mbody" style="padding-top:4px;padding-bottom:1.5rem;">
       <div style="font-size:38px;margin-bottom:10px;">🌿</div>
@@ -1136,7 +1357,7 @@ const MOON_RECS   = {
   'Cuarto menguante': 'Aplicá tratamientos contra plagas.',
 };
 const API_URL = 'https://api.anthropic.com/v1/messages';
-const AI_MODEL = 'claude-sonnet-4-5';
+const AI_MODEL= 'claude-sonnet-4-5';
 
 /* Datos de ejemplo (se reemplazan con los del usuario) */
 const SAMPLE_PLANTS = [
@@ -1227,8 +1448,88 @@ function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 /* ─────────────────────────────────────────────────────────────────
+   § 3.3b  UTILS WEATHER — deben declararse antes de init()
+   ───────────────────────────────────────────────────────────────── */
+
+/** Texto descriptivo del código WMO */
+function codeTxt(c) {
+  if (c === 0) return 'Despejado';
+  if (c <= 2)  return 'Parcialmente nublado';
+  if (c <= 3)  return 'Nublado';
+  if (c <= 48) return 'Neblina';
+  if (c <= 67) return 'Lluvia';
+  if (c <= 99) return 'Tormenta';
+  return 'Variable';
+}
+
+/** Ícono SVG según código WMO */
+function codeIco(c) {
+  if (c === 0) return 's-sun';
+  if (c <= 2)  return 's-cs';
+  if (c <= 3)  return 's-cloud';
+  if (c <= 99) return 's-rain';
+  return 's-cloud';
+}
+
+/** Calcula la fase lunar para una fecha dada */
+function getLunar(d) {
+  const k    = new Date(2000, 0, 6);
+  const diff = (d - k) / 86400000;
+  const c    = 29.53;
+  const p    = ((diff % c) + c) % c;
+  if (p < 1.85)  return { name:'Luna nueva',       short:'Nueva', mark:'●' };
+  if (p < 7.38)  return { name:'Cuarto creciente', short:'Crec.', mark:'◐' };
+  if (p < 14.77) return { name:'Luna llena',        short:'Llena', mark:'○' };
+  if (p < 22.15) return { name:'Cuarto menguante',  short:'Meng.', mark:'◑' };
+  return { name:'Luna nueva', short:'Nueva', mark:'●' };
+}
+
+// Inline SVG paths para ícono de clima en sidebar
+const WEATHER_SVG = {
+  clear:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7.1" y2="7.1"/><line x1="16.9" y1="16.9" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="7.1" y2="16.9"/><line x1="16.9" y1="7.1" x2="19.1" y2="4.9"/></svg>',
+  partial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M2 10h2M5.6 5.6l1.4 1.4"/><path d="M18 14a5 5 0 00-9.9-1H6a4 4 0 000 8h12a3 3 0 000-6z"/></svg>',
+  cloudy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 17a4 4 0 000-8h-1.3A7 7 0 104 17h16z"/></svg>',
+  rain:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 15a4 4 0 000-8h-1.3A7 7 0 104 15h16z"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="16" y1="19" x2="16" y2="21"/></svg>',
+  fog:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h18M3 12h18M3 16h12"/></svg>',
+};
+
+function weatherIcoKey(icoId) {
+  if (!icoId) return 'clear';
+  if (icoId === 's-sun')   return 'clear';
+  if (icoId === 's-cs')    return 'partial';
+  if (icoId === 's-cloud') return 'cloudy';
+  if (icoId === 's-rain')  return 'rain';
+  return 'fog';
+}
+
+function updateSidebarWeather(temp, moonMark, icoId, hum) {
+  const t   = document.getElementById('swTemp');
+  const m   = document.getElementById('swMoon');
+  const h   = document.getElementById('swHum');
+  const ico = document.getElementById('swIco');
+  if (t)   t.textContent = (temp !== '--') ? temp + '°' : '--°';
+  if (m)   m.textContent = moonMark || '●';
+  if (h)   h.textContent = (hum !== undefined && hum !== null) ? hum + '%' : '--%';
+  if (ico) ico.innerHTML = WEATHER_SVG[weatherIcoKey(icoId)] || WEATHER_SVG.clear;
+}
+
+/* ─────────────────────────────────────────────────────────────────
    § 3.4  INIT — arranque y configuración inicial
    ───────────────────────────────────────────────────────────────── */
+
+/* ── Drawer de tareas (desktop) ── */
+let tasksDrawerOpen = false;
+function toggleTasksDrawer() {
+  // Only behaves as drawer on desktop
+  if (window.innerWidth <= 900) return;
+  tasksDrawerOpen = !tasksDrawerOpen;
+  const col = document.getElementById('colTasks');
+  if (col) {
+    col.classList.toggle('tasks-collapsed', !tasksDrawerOpen);
+    col.classList.toggle('tasks-expanded',   tasksDrawerOpen);
+  }
+}
+
 (function init() {
   // Fecha en header
   const now = new Date();
@@ -1237,7 +1538,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 
   // Fase lunar inicial en sidebar
   const ph = getLunar(new Date());
-  updateSidebarWeather('--', ph.mark);
+  updateSidebarWeather('--', ph.mark, 's-sun', null);
 
   // Drum selector
   renderDrum();
@@ -1282,9 +1583,10 @@ function switchInvTab(tab, el) {
 /* ─────────────────────────────────────────────────────────────────
    § 3.6  WEATHER — clima, geolocalización y fase lunar
    ───────────────────────────────────────────────────────────────── */
+/* WEATHER_SVG moved to §3.3 UTILS */
+
 function requestGeo() {
   if (!navigator.geolocation) { setGeoLabel('Sin GPS'); loadWeather(-34.6037, -58.3816); return; }
-  setGeoLabel('Obteniendo ubicación...');
   navigator.geolocation.getCurrentPosition(
     p => { loadWeather(p.coords.latitude, p.coords.longitude); revGeo(p.coords.latitude, p.coords.longitude); },
     ()  => { loadWeather(-34.6037, -58.3816); setGeoLabel('Buenos Aires, AR'); },
@@ -1294,14 +1596,14 @@ function requestGeo() {
 
 function setGeoLabel(t) { document.getElementById('geoLabel').textContent = t; }
 
-function revGeo(lat,lon){
+function revGeo(lat, lon) {
   fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`)
-    .then(r=>r.json()).then(d=>{
-      const a=d.address||{};
-      const city=a.city||a.town||a.village||a.municipality||'';
-      const state=(a.state||'').split(' ')[0];
-      setGeoLabel(city+(state?', '+state:''));
-    }).catch(()=>{});
+    .then(r => r.json())
+    .then(d => {
+      const c  = d.address?.city || d.address?.town || d.address?.village || '';
+      const st = d.address?.state || '';
+      setGeoLabel(c + (st ? ', ' + st.split(' ')[0] : ''));
+    }).catch(() => {});
 }
 
 function loadWeather(lat, lon) {
@@ -1313,22 +1615,18 @@ function loadWeather(lat, lon) {
       const temp = Math.round(c.temperature_2m * 10) / 10;
       const hum  = c.relative_humidity_2m || 0;
       const cond = codeTxt(c.weathercode || 0);
+      const ico  = codeIco(c.weathercode || 0);
       const ph   = getLunar(new Date());
-      updateSidebarWeather(temp, ph.mark);
+      updateSidebarWeather(temp, ph.mark, ico, hum);
       updateWeatherPopup(temp, cond, hum, d.daily, ph);
     })
     .catch(() => {
       const ph = getLunar(new Date());
-      updateSidebarWeather('--', ph.mark);
+      updateSidebarWeather('--', ph.mark, 's-sun', null);
     });
 }
 
-function updateSidebarWeather(temp, moonMark) {
-  const t = document.getElementById('swTemp');
-  const m = document.getElementById('swMoon');
-  if (t) t.textContent = temp + '°';
-  if (m) m.textContent = moonMark;
-}
+
 
 function updateWeatherPopup(temp, cond, hum, daily, ph) {
   const $ = id => document.getElementById(id);
@@ -1346,19 +1644,23 @@ function updateWeatherPopup(temp, cond, hum, daily, ph) {
   else               rec = 'Condiciones favorables para regar y revisar las plantas.';
   if ($('wpRec')) $('wpRec').textContent = rec;
 
-  // Pronóstico 5 días
+  // Pronóstico 5 días con fase lunar por día
   if (daily && $('wpForecast')) {
     const DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
     let fc = '';
     for (let i = 0; i < 5; i++) {
-      const dt  = new Date(daily.time[i] + 'T12:00:00');
-      const hd  = daily.relative_humidity_2m_mean ? daily.relative_humidity_2m_mean[i] : '';
+      const dt   = new Date(daily.time[i] + 'T12:00:00');
+      const hd   = daily.relative_humidity_2m_mean ? daily.relative_humidity_2m_mean[i] : '';
+      const moon = getLunar(dt);
+      const icoKey = weatherIcoKey(codeIco(daily.weathercode[i]||0));
+      const icoSvg = WEATHER_SVG[icoKey] || WEATHER_SVG.clear;
       fc += `<div class="wp-fd">
         <div class="wp-dow">${i===0?'Hoy':DAYS[dt.getDay()]}</div>
-        <div class="sdp-ico">${sv(codeIco(daily.weathercode[i]||0),10,10)}</div>
+        <div class="wp-wico">${icoSvg}</div>
         <div class="wp-ft">${Math.round(daily.temperature_2m_max[i])}°</div>
-        <div class="wp-fr">${daily.precipitation_probability_max[i]||0}%</div>
-        ${typeof hd==='number'?`<div class="wp-fhum">${Math.round(hd)}%HR</div>`:''}
+        ${typeof hd==='number'?`<div class="wp-fhum">${Math.round(hd)}%</div>`:'<div class="wp-fhum">—</div>'}
+        <div class="wp-fr">☂${daily.precipitation_probability_max[i]||0}%</div>
+        <div class="wp-fmoon" title="${moon.name}">${MOON_ICONS[moon.name]||'🌑'}</div>
       </div>`;
     }
     $('wpForecast').innerHTML = fc;
@@ -1399,38 +1701,9 @@ function closeWeatherPopupOutside(e) {
   }
 }
 
-/** Texto descriptivo del código WMO */
-function codeTxt(c) {
-  if (c === 0) return 'Despejado';
-  if (c <= 2)  return 'Parcialmente nublado';
-  if (c <= 3)  return 'Nublado';
-  if (c <= 48) return 'Neblina';
-  if (c <= 67) return 'Lluvia';
-  if (c <= 99) return 'Tormenta';
-  return 'Variable';
-}
+/* codeTxt+codeIco moved to §3.3 UTILS */
 
-/** Ícono SVG según código WMO */
-function codeIco(c) {
-  if (c === 0) return 's-sun';
-  if (c <= 2)  return 's-cs';
-  if (c <= 3)  return 's-cloud';
-  if (c <= 99) return 's-rain';
-  return 's-cloud';
-}
-
-/** Calcula la fase lunar para una fecha dada */
-function getLunar(d) {
-  const k    = new Date(2000, 0, 6);
-  const diff = (d - k) / 86400000;
-  const c    = 29.53;
-  const p    = ((diff % c) + c) % c;
-  if (p < 1.85)  return { name:'Luna nueva',       short:'Nueva', mark:'●' };
-  if (p < 7.38)  return { name:'Cuarto creciente', short:'Crec.', mark:'◐' };
-  if (p < 14.77) return { name:'Luna llena',        short:'Llena', mark:'○' };
-  if (p < 22.15) return { name:'Cuarto menguante',  short:'Meng.', mark:'◑' };
-  return { name:'Luna nueva', short:'Nueva', mark:'●' };
-}
+/* getLunar moved to §3.3 UTILS */
 
 /* ─────────────────────────────────────────────────────────────────
    § 3.7  PLANTS — inventario, modal, foto e identificación IA
@@ -1570,65 +1843,136 @@ function handleMPhoto(input) {
 }
 
 /* ── Identificación de especie por IA (dentro del modal) ── */
-async function identifyFromModal(){
-  const file=window._mPhotoFile; if(!file)return;
-  const btn=document.getElementById('mIdBtn');
-  const res=document.getElementById('mIdResult');
-  btn.disabled=true;
-  res.innerHTML='<span class="spin"></span> Identificando...';
-  try{
-    const b64=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=e=>resolve(e.target.result.split(',')[1]);r.onerror=reject;r.readAsDataURL(file);});
-    const mt=file.type||'image/jpeg';
-    const resp=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:AI_MODEL,max_tokens:600,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:'Identificá esta planta. Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido sin texto adicional ni markdown. Formato: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}'}]}]})});
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    const data=await resp.json();
-    if(data.error) throw new Error(data.error.message||'API error');
-    const raw=data.content.map(c=>c.text||'').join('').trim();
-    const pl=JSON.parse(raw.replace(/^```[a-z]*
-?/,'').replace(/```$/,'').trim());
-    if(pl.nombre_comun&&!document.getElementById('f-name').value) document.getElementById('f-name').value=pl.nombre_comun;
-    if(pl.nombre_cientifico) document.getElementById('f-species').value=pl.nombre_cientifico;
-    if(pl.riego_dias){drumIdx=drumDaysToIdx(pl.riego_dias);renderDrum();}
-    if(pl.luz){const luzMap={alta:'Alta — sol directo',media:'Media — luz indirecta',baja:'Baja — poca luz'};const k=Object.keys(luzMap).find(k=>pl.luz.toLowerCase().includes(k));if(k)document.getElementById('f-luz').value=luzMap[k];}
-    if(pl.cuidados&&!document.getElementById('f-notes').value) document.getElementById('f-notes').value=pl.cuidados;
-    res.textContent='✓ '+(pl.nombre_comun||'')+' / '+(pl.nombre_cientifico||'');
-    res.style.color='var(--sage-lt)';
-  }catch(err){
-    console.error('identifyFromModal:',err);
-    res.textContent='Error: '+err.message.slice(0,80);
-    res.style.color='rgba(168,194,153,0.5)';
+async function identifyFromModal() {
+  const file = window._mPhotoFile; if (!file) return;
+  const btn  = document.getElementById('mIdBtn');
+  const res  = document.getElementById('mIdResult');
+  btn.disabled = true;
+  res.innerHTML = '<span class="spin"></span> Identificando...';
+
+  try {
+    const b64 = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload  = e => resolve(e.target.result.split(',')[1]);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+    const mt = file.type || 'image/jpeg';
+
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
+            { type: 'text',  text: 'Identificá esta planta. Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin markdown, sin bloques de código. Formato exacto: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}' }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+
+    const raw = data.content.map(c => c.text || '').join('').trim();
+    const pl  = JSON.parse(raw.replace(/^```[\w]*/g,'').replace(/```/g,'').trim());
+
+    if (pl.nombre_comun  && !document.getElementById('f-name').value)
+      document.getElementById('f-name').value = pl.nombre_comun;
+    if (pl.nombre_cientifico)
+      document.getElementById('f-species').value = pl.nombre_cientifico;
+    if (pl.riego_dias) { drumIdx = drumDaysToIdx(pl.riego_dias); renderDrum(); }
+    if (pl.luz) {
+      const luzMap = { alta:'Alta — sol directo', media:'Media — luz indirecta', baja:'Baja — poca luz' };
+      const k = Object.keys(luzMap).find(k => pl.luz.toLowerCase().includes(k));
+      if (k) document.getElementById('f-luz').value = luzMap[k];
+    }
+    if (pl.cuidados && !document.getElementById('f-notes').value)
+      document.getElementById('f-notes').value = pl.cuidados;
+
+    res.textContent = '✓ ' + (pl.nombre_comun || '') + ' / ' + (pl.nombre_cientifico || '');
+    res.style.color = 'var(--sage-lt)';
+
+  } catch (err) {
+    console.error('identifyFromModal error:', err);
+    res.textContent = 'Error: ' + err.message.slice(0, 80);
+    res.style.color = 'rgba(168,194,153,0.5)';
   }
-  btn.disabled=false;
+  btn.disabled = false;
 }
 
 /* ── Identificación IA desde barra lateral (inventario) ── */
-async function identifyPlant(input){
-  if(!input.files||!input.files[0])return;
-  const file=input.files[0];
-  const ld=document.getElementById('id-loading');
-  const resBox=document.getElementById('resBox');
-  ld.style.display='flex'; resBox.style.display='none';
-  try{
-    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
-    const mt=file.type||'image/jpeg';
-    const resp=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:AI_MODEL,max_tokens:600,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:'Identificá esta planta. Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido sin texto adicional ni markdown. Formato: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}'}]}]})});
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    const data=await resp.json();
-    if(data.error) throw new Error(data.error.message||'API error');
-    const raw=data.content.map(c=>c.text||'').join('').trim();
-    const pl=JSON.parse(raw.replace(/^```[a-z]*
-?/,'').replace(/```$/,'').trim());
-    identifiedData=pl;
-    document.getElementById('resName').textContent=(pl.nombre_comun||'?')+' / '+(pl.nombre_cientifico||'?');
-    document.getElementById('resDetail').textContent='Riego: cada '+(pl.riego_dias||'?')+' días · Luz: '+(pl.luz||'?');
-    document.getElementById('resCare').textContent=pl.cuidados||'';
-    resBox.style.display='block';
-  }catch(err){
-    console.error('identifyPlant:',err);
-    resBox.innerHTML='<p style="font-size:11px;color:var(--ink3);">Error al identificar: '+err.message.slice(0,100)+'</p>';
-    resBox.style.display='block';
+async function identifyPlant(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const ld   = document.getElementById('id-loading');
+  const resBox = document.getElementById('resBox');
+  ld.style.display = 'flex';
+  resBox.style.display = 'none';
+
+  // Convert to base64
+  const b64 = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = e => res(e.target.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+  const mt = file.type || 'image/jpeg';
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
+            { type: 'text',  text: 'Identificá esta planta. Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin markdown, sin bloques de código. Formato exacto: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}' }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error('HTTP ' + resp.status + ': ' + errText.slice(0,200));
+    }
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+    const raw = data.content.map(c => c.text || '').join('').trim();
+    // Strip any accidental markdown fences
+    const clean = raw.replace(/^```[\w]*/g,'').replace(/```/g,'').trim();
+    const pl = JSON.parse(clean);
+
+    identifiedData = pl;
+    document.getElementById('resName').textContent   = (pl.nombre_comun || '?') + ' / ' + (pl.nombre_cientifico || '?');
+    document.getElementById('resDetail').textContent = 'Riego: cada ' + (pl.riego_dias || '?') + ' días · Luz: ' + (pl.luz || '?');
+    document.getElementById('resCare').textContent   = pl.cuidados || '';
+    resBox.style.display = 'block';
+
+  } catch (err) {
+    console.error('identifyPlant error:', err);
+    resBox.innerHTML = '<p style="font-size:11px;color:var(--ink3);">Error: ' + err.message.slice(0, 120) + '</p>';
+    resBox.style.display = 'block';
   }
-  ld.style.display='none';
+
+  ld.style.display = 'none';
 }
 
 function addFromIdentify() {
@@ -1870,49 +2214,44 @@ function changeMonth(d) {
 /* ── Popup de detalle de día ── */
 function showDayPopup(event, ds) {
   event.stopPropagation();
-  const dt = new Date(ds + 'T12:00:00');
+  const dt       = new Date(ds + 'T12:00:00');
   const dayTasks = tasks.filter(t => t.date === ds);
-  const popup = document.getElementById('dayPopup');
-  const BC = {r:'tb-r',a:'tb-a',p:'tb-p',t:'tb-t',o:'tb-o'};
-  const BL = {r:'Riego',a:'Abono',p:'Poda',t:'Tratamiento',o:'Tarea'};
-  document.getElementById('dpDate').textContent = dt.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-  if (!dayTasks.length) {
-    document.getElementById('dpBody').innerHTML = '<div class="dp-empty">Sin tareas para este día.</div>';
-  } else {
-    document.getElementById('dpBody').innerHTML = dayTasks.map(t =>
-      `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--rule);">
-        <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id});renderPopupTasks('${ds}')" style="flex-shrink:0;">${sv('s-ok',8,8)}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;${t.done?'text-decoration:line-through;color:var(--ink3);':''}">${t.name}</div>
-          <div style="display:flex;gap:4px;margin-top:2px;">
-            <span class="tbadge ${BC[t.type]||'tb-o'}">${BL[t.type]||'Tarea'}</span>
-            <span style="font-size:9px;color:var(--ink3);">${t.plant||''}</span>
+  const popup    = document.getElementById('dayPopup');
+
+  document.getElementById('dpDate').textContent = dt.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  document.getElementById('dpBody').innerHTML = !dayTasks.length
+    ? '<div class="dp-empty">Sin tareas para este día.</div>'
+    : dayTasks.map(t => `
+        <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--rule);">
+          <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id});showDayPopup(event,'${ds}')" style="flex-shrink:0;">${sv('s-ok',8,8)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;${t.done?'text-decoration:line-through;color:var(--ink3);':''}">${t.name}</div>
+            <div style="display:flex;gap:4px;margin-top:2px;align-items:center;">
+              <span class="tbadge ${TASK_BADGE_CLS[t.type]||'tb-o'}">${TASK_TYPES[t.type]||'Tarea'}</span>
+              <span style="font-size:9px;color:var(--ink3);">${t.plant||''}</span>
+            </div>
           </div>
-        </div>
-      </div>`).join('');
-  }
+        </div>`).join('');
+
+  // Posicionar popup junto a la celda
   const rect = event.target.closest('.cd').getBoundingClientRect();
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const pw = 220;
+  const vw   = window.innerWidth, vh = window.innerHeight;
   popup.style.display = 'block';
-  const ph2 = popup.offsetHeight || 200;
+  const pw = 220, ph2 = popup.offsetHeight || 200;
   let left = rect.right + 6, top = rect.top;
   if (left + pw > vw - 8) left = rect.left - pw - 6;
-  if (top + ph2 > vh - 8) top = vh - ph2 - 8;
+  if (top  + ph2 > vh - 8) top = vh - ph2 - 8;
   popup.style.left = Math.max(8, left) + 'px';
-  popup.style.top = Math.max(8, top) + 'px';
+  popup.style.top  = Math.max(8, top)  + 'px';
   popup.classList.add('open');
-  document.getElementById('dayOverlay').style.display = 'block';
+  document.getElementById('dayOverlay').classList.add('open');
 }
-function renderPopupTasks(ds) {
-  showDayPopup({stopPropagation:()=>{},target:{closest:()=>document.querySelector('.cd.today')||document.querySelector('.cd')}}, ds);
-}
-/* closeDayPopup defined above in showDayPopup block */
 
 function closeDayPopup() {
   document.getElementById('dayPopup').classList.remove('open');
+  document.getElementById('dayOverlay').classList.remove('open');
 }
-
 
 /* ─────────────────────────────────────────────────────────────────
    § 3.10  TASKS — lista de tareas, modal y alarmas
@@ -1951,39 +2290,63 @@ function deleteTask(id)  { tasks = tasks.filter(t => t.id !== id); renderTaskLis
 
 /* ── Sugerencias de plantas en modal tarea ── */
 function showPlantSugg() {
-  renderPlantSugg(document.getElementById('t-plant').value.trim());
-  document.getElementById('plantSuggBox').style.display = 'block';
+  document.removeEventListener('click', closePlantSuggOutside);
+  renderPlantSugg('');  // always show full list on focus
+  const box = document.getElementById('plantSuggBox');
+  if (box) box.style.display = 'block';
   setTimeout(() => document.addEventListener('click', closePlantSuggOutside), 50);
 }
-function filterPlantSugg() { renderPlantSugg(document.getElementById('t-plant').value.trim()); }
+function filterPlantSugg() {
+  renderPlantSugg(document.getElementById('t-plant').value.trim());
+}
 function closePlantSuggOutside(e) {
-  if (!document.getElementById('plantSuggBox').contains(e.target) && e.target.id !== 't-plant') {
-    document.getElementById('plantSuggBox').style.display = 'none';
+  const box = document.getElementById('plantSuggBox');
+  const inp = document.getElementById('t-plant');
+  if (box && !box.contains(e.target) && e.target !== inp) {
+    box.style.display = 'none';
     document.removeEventListener('click', closePlantSuggOutside);
   }
 }
 function renderPlantSugg(query) {
   const box      = document.getElementById('plantSuggBox');
+  if (!box) return;
   const allNames = ['Todas', ...plants.map(p => p.name)];
-  const filtered = query ? allNames.filter(n => n.toLowerCase().includes(query.toLowerCase())) : allNames;
+  const filtered = query
+    ? allNames.filter(n => n.toLowerCase().includes(query.toLowerCase()))
+    : allNames;
   if (!filtered.length) { box.style.display = 'none'; return; }
-  box.innerHTML = filtered.map(name => `
-    <div class="plant-sugg-item" onclick="togglePlantSugg('${name.replace(/'/g,"\\'")}')">
-      <input type="checkbox" ${selectedPlants.includes(name) ? 'checked' : ''} onclick="event.stopPropagation();togglePlantSugg('${name.replace(/'/g,"\\'")}')">
+  box.innerHTML = filtered.map(name => {
+    const checked = selectedPlants.includes(name);
+    const safeN   = name.replace(/'/g,"\'");
+    return `<div class="plant-sugg-item" style="${checked?'background:rgba(51,77,40,0.07);':''}" onclick="togglePlantSugg('${safeN}')">
+      <input type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();togglePlantSugg('${safeN}')">
       <span>${name}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   box.style.display = 'block';
 }
 function togglePlantSugg(name) {
   if (name === 'Todas') {
-    selectedPlants = ['Todas'];
+    // Click "Todas" when already selected → deselect (clear)
+    if (selectedPlants.length === 1 && selectedPlants[0] === 'Todas') {
+      selectedPlants = [];
+    } else {
+      selectedPlants = ['Todas'];
+    }
   } else {
+    // Remove "Todas" from selection when picking a specific plant
     selectedPlants = selectedPlants.filter(n => n !== 'Todas');
-    selectedPlants.includes(name) ? selectedPlants = selectedPlants.filter(n => n !== name) : selectedPlants.push(name);
-    if (!selectedPlants.length) selectedPlants = ['Todas'];
+    if (selectedPlants.includes(name)) {
+      // Deselect this plant
+      selectedPlants = selectedPlants.filter(n => n !== name);
+    } else {
+      selectedPlants.push(name);
+    }
+    // Do NOT auto-add "Todas" — leave empty if nothing selected
   }
-  document.getElementById('t-plant').value = selectedPlants.join(', ');
-  renderPlantSugg(document.getElementById('t-plant').value.trim());
+  // Update input: empty if nothing selected, otherwise join names
+  document.getElementById('t-plant').value = selectedPlants.length ? selectedPlants.join(', ') : '';
+  renderPlantSugg('');  // re-render full list with updated checkboxes
 }
 
 /* ── Abrir modal nueva tarea ── */
@@ -2026,7 +2389,9 @@ function openEditTask(id) {
 function saveTask() {
   const name     = document.getElementById('t-name').value.trim(); if (!name) return;
   const alarm    = document.getElementById('t-alarm').value;
-  const plantVal = selectedPlants.length ? selectedPlants.join(', ') : (document.getElementById('t-plant').value || 'Todas');
+  // Use typed value if available; fall back to 'Todas' only when saving with nothing selected
+  const typedVal = document.getElementById('t-plant').value.trim();
+  const plantVal = selectedPlants.length ? selectedPlants.join(', ') : (typedVal || 'Todas');
 
   if (editingTaskId) {
     const t = tasks.find(x => x.id === editingTaskId);
