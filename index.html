@@ -342,11 +342,7 @@ body {
 .leg-over     { background: var(--amber-bg); border: 1px solid rgba(122,80,32,0.3); }
 
 /* Calendario: columna sin scroll, tamaño completo */
-#sec-work .panel3 .col:nth-child(2) .col-body {
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-}
+/* override removed — see §1.15 desktop media query */
 
 /* ═══════════════════════════════════════════════════════════════════
    § 1.9  LISTA DE TAREAS
@@ -853,8 +849,8 @@ button svg, button svg use { pointer-events: none; }
 </header>
 
 <!-- § 2.4  SECCIÓN: INVENTARIO + CALENDARIO + TAREAS -->
-<div id="sec-work" class="sec active" style="overflow:hidden;">
-  <div class="panel3" style="flex:1;overflow:hidden;">
+<div id="sec-work" class="sec active">
+  <div class="panel3" style="flex:1;">
 
     <!-- COL 1: INVENTARIO -->
     <div class="col col-inv">
@@ -1441,6 +1437,72 @@ function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 /* ─────────────────────────────────────────────────────────────────
+   § 3.3b  UTILS WEATHER — deben declararse antes de init()
+   ───────────────────────────────────────────────────────────────── */
+
+/** Texto descriptivo del código WMO */
+function codeTxt(c) {
+  if (c === 0) return 'Despejado';
+  if (c <= 2)  return 'Parcialmente nublado';
+  if (c <= 3)  return 'Nublado';
+  if (c <= 48) return 'Neblina';
+  if (c <= 67) return 'Lluvia';
+  if (c <= 99) return 'Tormenta';
+  return 'Variable';
+}
+
+/** Ícono SVG según código WMO */
+function codeIco(c) {
+  if (c === 0) return 's-sun';
+  if (c <= 2)  return 's-cs';
+  if (c <= 3)  return 's-cloud';
+  if (c <= 99) return 's-rain';
+  return 's-cloud';
+}
+
+/** Calcula la fase lunar para una fecha dada */
+function getLunar(d) {
+  const k    = new Date(2000, 0, 6);
+  const diff = (d - k) / 86400000;
+  const c    = 29.53;
+  const p    = ((diff % c) + c) % c;
+  if (p < 1.85)  return { name:'Luna nueva',       short:'Nueva', mark:'●' };
+  if (p < 7.38)  return { name:'Cuarto creciente', short:'Crec.', mark:'◐' };
+  if (p < 14.77) return { name:'Luna llena',        short:'Llena', mark:'○' };
+  if (p < 22.15) return { name:'Cuarto menguante',  short:'Meng.', mark:'◑' };
+  return { name:'Luna nueva', short:'Nueva', mark:'●' };
+}
+
+// Inline SVG paths para ícono de clima en sidebar
+const WEATHER_SVG = {
+  clear:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7.1" y2="7.1"/><line x1="16.9" y1="16.9" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="7.1" y2="16.9"/><line x1="16.9" y1="7.1" x2="19.1" y2="4.9"/></svg>',
+  partial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M2 10h2M5.6 5.6l1.4 1.4"/><path d="M18 14a5 5 0 00-9.9-1H6a4 4 0 000 8h12a3 3 0 000-6z"/></svg>',
+  cloudy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 17a4 4 0 000-8h-1.3A7 7 0 104 17h16z"/></svg>',
+  rain:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 15a4 4 0 000-8h-1.3A7 7 0 104 15h16z"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="16" y1="19" x2="16" y2="21"/></svg>',
+  fog:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h18M3 12h18M3 16h12"/></svg>',
+};
+
+function weatherIcoKey(icoId) {
+  if (!icoId) return 'clear';
+  if (icoId === 's-sun')   return 'clear';
+  if (icoId === 's-cs')    return 'partial';
+  if (icoId === 's-cloud') return 'cloudy';
+  if (icoId === 's-rain')  return 'rain';
+  return 'fog';
+}
+
+function updateSidebarWeather(temp, moonMark, icoId, hum) {
+  const t   = document.getElementById('swTemp');
+  const m   = document.getElementById('swMoon');
+  const h   = document.getElementById('swHum');
+  const ico = document.getElementById('swIco');
+  if (t)   t.textContent = (temp !== '--') ? temp + '°' : '--°';
+  if (m)   m.textContent = moonMark || '●';
+  if (h)   h.textContent = (hum !== undefined && hum !== null) ? hum + '%' : '--%';
+  if (ico) ico.innerHTML = WEATHER_SVG[weatherIcoKey(icoId)] || WEATHER_SVG.clear;
+}
+
+/* ─────────────────────────────────────────────────────────────────
    § 3.4  INIT — arranque y configuración inicial
    ───────────────────────────────────────────────────────────────── */
 
@@ -1510,34 +1572,7 @@ function switchInvTab(tab, el) {
 /* ─────────────────────────────────────────────────────────────────
    § 3.6  WEATHER — clima, geolocalización y fase lunar
    ───────────────────────────────────────────────────────────────── */
-// Inline SVG paths for sidebar weather icon — sobrio, stroke-only, 14×14
-const WEATHER_SVG = {
-  clear:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7.1" y2="7.1"/><line x1="16.9" y1="16.9" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="7.1" y2="16.9"/><line x1="16.9" y1="7.1" x2="19.1" y2="4.9"/></svg>',
-  partial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M2 10h2M5.6 5.6l1.4 1.4"/><path d="M18 14a5 5 0 00-9.9-1H6a4 4 0 000 8h12a3 3 0 000-6z"/></svg>',
-  cloudy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 17a4 4 0 000-8h-1.3A7 7 0 104 17h16z"/></svg>',
-  rain:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 15a4 4 0 000-8h-1.3A7 7 0 104 15h16z"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="16" y1="19" x2="16" y2="21"/></svg>',
-  fog:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h18M3 12h18M3 16h12"/></svg>',
-};
-
-function weatherIcoKey(icoId) {
-  if (!icoId) return 'clear';
-  if (icoId === 's-sun')   return 'clear';
-  if (icoId === 's-cs')    return 'partial';
-  if (icoId === 's-cloud') return 'cloudy';
-  if (icoId === 's-rain')  return 'rain';
-  return 'fog';
-}
-
-function updateSidebarWeather(temp, moonMark, icoId, hum) {
-  const t   = document.getElementById('swTemp');
-  const m   = document.getElementById('swMoon');
-  const h   = document.getElementById('swHum');
-  const ico = document.getElementById('swIco');
-  if (t)   t.textContent   = (temp !== '--') ? temp + '°' : '--°';
-  if (m)   m.textContent   = moonMark || '●';
-  if (h)   h.textContent   = (hum !== undefined && hum !== null) ? hum + '%' : '--%';
-  if (ico) ico.innerHTML   = WEATHER_SVG[weatherIcoKey(icoId)] || WEATHER_SVG.clear;
-}
+/* WEATHER_SVG moved to §3.3 UTILS */
 
 function requestGeo() {
   if (!navigator.geolocation) { setGeoLabel('Sin GPS'); loadWeather(-34.6037, -58.3816); return; }
@@ -1655,38 +1690,9 @@ function closeWeatherPopupOutside(e) {
   }
 }
 
-/** Texto descriptivo del código WMO */
-function codeTxt(c) {
-  if (c === 0) return 'Despejado';
-  if (c <= 2)  return 'Parcialmente nublado';
-  if (c <= 3)  return 'Nublado';
-  if (c <= 48) return 'Neblina';
-  if (c <= 67) return 'Lluvia';
-  if (c <= 99) return 'Tormenta';
-  return 'Variable';
-}
+/* codeTxt+codeIco moved to §3.3 UTILS */
 
-/** Ícono SVG según código WMO */
-function codeIco(c) {
-  if (c === 0) return 's-sun';
-  if (c <= 2)  return 's-cs';
-  if (c <= 3)  return 's-cloud';
-  if (c <= 99) return 's-rain';
-  return 's-cloud';
-}
-
-/** Calcula la fase lunar para una fecha dada */
-function getLunar(d) {
-  const k    = new Date(2000, 0, 6);
-  const diff = (d - k) / 86400000;
-  const c    = 29.53;
-  const p    = ((diff % c) + c) % c;
-  if (p < 1.85)  return { name:'Luna nueva',       short:'Nueva', mark:'●' };
-  if (p < 7.38)  return { name:'Cuarto creciente', short:'Crec.', mark:'◐' };
-  if (p < 14.77) return { name:'Luna llena',        short:'Llena', mark:'○' };
-  if (p < 22.15) return { name:'Cuarto menguante',  short:'Meng.', mark:'◑' };
-  return { name:'Luna nueva', short:'Nueva', mark:'●' };
-}
+/* getLunar moved to §3.3 UTILS */
 
 /* ─────────────────────────────────────────────────────────────────
    § 3.7  PLANTS — inventario, modal, foto e identificación IA
