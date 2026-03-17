@@ -696,6 +696,7 @@ button svg, button svg use { pointer-events: none; }
   }
 
   /* Columnas: apiladas, sin overflow oculto */
+  .col-inv-scroll { overflow: visible; height: auto; }
   .col {
     border-right: none;
     border-bottom: 1px solid var(--rule);
@@ -791,6 +792,240 @@ button svg, button svg use { pointer-events: none; }
     width: min(300px, calc(100vw - 16px));
   }
 }
+
+/* ── SLIDER DE INVENTARIO ── */
+.inv-slider-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
+}
+.inv-slider {
+  display: flex;
+  background: var(--sf2);
+  border-radius: 20px;
+  padding: 2px;
+  gap: 0;
+  border: 1px solid var(--rule);
+}
+.inv-slider-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 16px;
+  border-radius: 18px;
+  border: none;
+  background: transparent;
+  color: var(--ink3);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.inv-slider-btn.active {
+  background: var(--moss);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(51,77,40,0.25);
+}
+
+/* ── PANEL INVENTARIO COLAPSABLE ── */
+.col-inv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.col-inv-header:hover { background: var(--sf); }
+.col-inv-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.col-inv-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  background: rgba(51,77,40,0.1);
+  color: var(--moss);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.col-inv-arrow {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink3);
+  transition: transform 0.2s;
+}
+.col-inv-arrow svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.col-inv.inv-expanded .col-inv-arrow { transform: rotate(180deg); }
+.col-inv .col-body { display: none; }
+.col-inv.inv-expanded .col-body { display: block; }
+
+/* ── TAREAS COLAPSABLES EN MÓVIL ── */
+@media (max-width: 900px) {
+  .col-tasks .col-body { display: none; }
+  .col-tasks.tasks-mobile-open .col-body { display: block; }
+  .col-tasks .col-hdr { cursor: pointer; user-select: none; }
+  .col-tasks-arrow { display: flex !important; }
+  .col-tasks.tasks-mobile-open .col-tasks-arrow { transform: rotate(180deg); }
+}
+
+
+/* ── MODO NOCTURNO ── */
+body.dark-mode {
+  --bg:   #1a1c1a;
+  --sf:   #232623;
+  --sf2:  #2a2e2a;
+  --ink:  #e8e6e0;
+  --ink2: #b8b6b0;
+  --ink3: #787870;
+  --moss:    #4a7a3a;
+  --moss2:   #2a4a20;
+  --sage:    #7aaa6a;
+  --sage-lt: #9ac88a;
+  --rule:  rgba(232,230,224,0.09);
+  --rule2: rgba(232,230,224,0.16);
+  --warn-bg:  #2e2010;
+  --info-bg:  #0e1e2e;
+  --red-bg:   #2e0e0e;
+  --red-lt:   rgba(180,60,60,0.15);
+  --amber-bg: #261e08;
+}
+body.dark-mode .modal { background: var(--bg); }
+body.dark-mode .pcard { background: var(--sf); }
+body.dark-mode .pcard:hover { background: var(--sf2); }
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea { background: var(--sf2); color: var(--ink); }
+body.dark-mode .col-body { scrollbar-color: rgba(232,230,224,0.12) transparent; }
+body.dark-mode #weatherPopup { background: #111814; }
+body.dark-mode .drum-overlay::before { background: linear-gradient(to bottom, var(--sf), rgba(35,38,35,0)); }
+body.dark-mode .drum-overlay::after  { background: linear-gradient(to top,   var(--sf), rgba(35,38,35,0)); }
+
+/* ── SLIDER DÍA/NOCHE ── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.theme-toggle-track {
+  width: 34px;
+  height: 18px;
+  background: var(--sf2);
+  border: 1px solid var(--rule2);
+  border-radius: 9px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+body.dark-mode .theme-toggle-track {
+  background: var(--moss);
+  border-color: var(--sage);
+}
+.theme-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink3);
+  transition: transform 0.2s, background 0.2s;
+  pointer-events: none;
+}
+body.dark-mode .theme-toggle-thumb {
+  transform: translateX(16px);
+  background: #fff;
+}
+.theme-ico {
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+
+/* ── SECCIÓN COLAPSABLE DENTRO DEL PANEL ── */
+.inv-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--sf);
+  margin: 8px 0 0;
+  transition: background 0.15s;
+}
+.inv-section-toggle:hover { background: var(--sf2); }
+.inv-section-toggle.open  { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+.inv-section-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.inv-section-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  background: rgba(51,77,40,0.12);
+  color: var(--moss);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.inv-section-arrow {
+  color: var(--ink3);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.inv-section-toggle.open .inv-section-arrow { transform: rotate(180deg); }
+.inv-section-body {
+  border: 1px solid var(--rule);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  padding: 8px 12px 10px;
+  background: var(--bg);
+}
+
+/* Remove old col-inv-header styles since we don't use them anymore */
+.col-inv-header { display: none; }
+
+
+/* col-inv scrollable area (replaces col-body since we have no col-hdr) */
+.col-inv-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 0 0 12px;
+}
+.col-inv-scroll::-webkit-scrollbar       { width: 3px; }
+.col-inv-scroll::-webkit-scrollbar-thumb { background: rgba(28,28,23,0.12); border-radius: 2px; }
+
+/* Remove stale col-inv-header (no longer in HTML) */
+.col-inv-header { display: none !important; }
 </style>
 </head>
 <body>
@@ -877,6 +1112,13 @@ button svg, button svg use { pointer-events: none; }
     <svg viewBox="0 0 24 24" width="9" height="9"><use href="#s-pin"/></svg>
     <span id="geoLabel">Obteniendo ubicación...</span>
   </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="theme-toggle" onclick="toggleDarkMode()" title="Modo día/noche">
+      <span class="theme-ico">☀️</span>
+      <div class="theme-toggle-track"><div class="theme-toggle-thumb"></div></div>
+      <span class="theme-ico">🌙</span>
+    </div>
+  </div>
 </header>
 
 <!-- § 2.4  SECCIÓN: INVENTARIO + CALENDARIO + TAREAS -->
@@ -884,79 +1126,114 @@ button svg, button svg use { pointer-events: none; }
   <div class="panel3" style="flex:1;">
 
     <!-- COL 1: INVENTARIO -->
-    <div class="col col-inv">
-      <div class="col-hdr">
-        <span class="col-title">Inventario</span>
-        <button class="btn btn-primary btn-sm" onclick="openNewPlant()">
-          <svg><use href="#s-plus"/></svg>Nueva
-        </button>
+    <div class="col col-inv" id="colInv">
+      <div class="col-inv-scroll">
+
+      <!-- Slider: Plantas | Insumos -->
+      <div class="inv-slider-wrap">
+        <div class="inv-slider">
+          <button class="inv-slider-btn active" id="sliderPlantas" onclick="switchInvSlider('plantas')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 22c0 0 8-2 12-8s4-14 4-14-10 0-14 8-2 14-2 14z"/><line x1="2" y1="22" x2="12" y2="12"/></svg>
+            Plantas
+          </button>
+          <button class="inv-slider-btn" id="sliderInsumos" onclick="switchInvSlider('insumos')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Insumos
+          </button>
+        </div>
       </div>
-      <div class="col-body">
-        <div class="inv-tabs">
-          <div class="inv-tab active" onclick="switchInvTab('plantas',this)">Plantas</div>
-          <div class="inv-tab" onclick="switchInvTab('insumos',this)">Insumos</div>
+
+      <!-- PANEL: PLANTAS -->
+      <div class="inv-slider-panel" id="tab-plantas" style="display:block;">
+
+        <!-- Barra IA — siempre visible -->
+        <div class="id-bar">
+          <div class="id-bar-l">
+            <div class="id-badge">IA</div>
+            <div class="id-bar-title">Identificar especie</div>
+            <div class="id-bar-sub">Fotografiá la planta para crear la ficha automáticamente.</div>
+          </div>
+          <div>
+            <div class="upload-btn" onclick="document.getElementById('fileInput').click()">
+              <svg><use href="#s-cam"/></svg>Foto / Carrete
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="identifyPlant(this)">
+          </div>
+        </div>
+        <div id="id-loading" style="display:none;align-items:center;gap:7px;padding:6px 0;font-family:'Barlow Condensed',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);">
+          <span class="spin"></span>Analizando...
+        </div>
+        <div class="res-box" id="resBox">
+          <div class="res-name" id="resName"></div>
+          <div class="res-detail" id="resDetail"></div>
+          <div class="res-care" id="resCare"></div>
+          <div class="res-acts">
+            <button class="btn btn-primary btn-sm" onclick="addFromIdentify()">Agregar</button>
+            <button class="btn btn-ghost btn-sm" onclick="closeRes()">Cancelar</button>
+          </div>
         </div>
 
-        <!-- TAB: PLANTAS -->
-        <div class="inv-tab-panel active" id="tab-plantas">
-          <div class="id-bar">
-            <div class="id-bar-l">
-              <div class="id-badge">IA</div>
-              <div class="id-bar-title">Identificar especie</div>
-              <div class="id-bar-sub">Fotografiá la planta para crear la ficha automáticamente.</div>
-            </div>
-            <div>
-              <div class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                <svg><use href="#s-cam"/></svg>Foto
-              </div>
-              <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="identifyPlant(this)">
-            </div>
-          </div>
-          <div id="id-loading" style="display:none;align-items:center;gap:7px;padding:6px 0;font-family:'Barlow Condensed',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);">
-            <span class="spin"></span>Analizando...
-          </div>
-          <div class="res-box" id="resBox">
-            <div class="res-name" id="resName"></div>
-            <div class="res-detail" id="resDetail"></div>
-            <div class="res-care" id="resCare"></div>
-            <div class="res-acts">
-              <button class="btn btn-primary btn-sm" onclick="addFromIdentify()">Agregar</button>
-              <button class="btn btn-ghost btn-sm" onclick="closeRes()">Cancelar</button>
-            </div>
-          </div>
+        <!-- Botón colapsable — solo colapsa el listado -->
+        <div class="inv-section-toggle" id="togglePlantas" onclick="toggleInvSection('plantas')">
+          <span class="inv-section-label">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 22V12"/><path d="M5 9c0 0 1 4 7 4s7-4 7-4-2.5-7-7-7S5 9 5 9z"/></svg>
+            Inventario de plantas
+            <span class="inv-section-badge" id="badgePlantas">0</span>
+          </span>
+          <svg class="inv-section-arrow" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="inv-section-body" id="bodyPlantas" style="display:none;">
           <div id="plantList"></div>
-          <div class="add-pcard" onclick="openNewPlant()">
-            <svg><use href="#s-plus"/></svg>Agregar planta
+        </div>
+
+        <!-- Agregar planta — siempre visible -->
+        <div class="add-pcard" onclick="openNewPlant()">
+          <svg><use href="#s-plus"/></svg>Agregar planta
+        </div>
+      </div>
+
+      <!-- PANEL: INSUMOS -->
+      <div class="inv-slider-panel" id="tab-insumos" style="display:none;">
+
+        <!-- Botón "Nuevo insumo" — siempre visible -->
+        <div style="display:flex;align-items:center;justify-content:flex-end;padding:8px 0 4px;">
+          <button class="btn btn-primary btn-sm" onclick="openAddSupply()">
+            <svg><use href="#s-plus"/></svg>Nuevo insumo
+          </button>
+        </div>
+
+        <!-- Formulario de nuevo insumo — siempre visible cuando se abre -->
+        <div id="supplyAddRow" style="display:none;">
+          <div style="background:rgba(51,77,40,0.06);border:1px solid rgba(51,77,40,0.15);border-radius:3px;padding:6px 8px;margin-bottom:5px;display:flex;flex-direction:column;gap:5px;">
+            <input type="text" id="sName" placeholder="Nombre del insumo..." style="padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;width:100%;">
+            <div style="display:grid;grid-template-columns:1fr 90px 1fr;gap:5px;">
+              <input type="number" id="sQty" placeholder="Cantidad" min="0" style="padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;">
+              <select id="sUnit" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option>unidades</option><option>kg</option><option>g</option><option>ml</option><option>bolsas</option><option>litros</option></select>
+              <select id="sStatus" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option value="ok">OK</option><option value="low">Poco</option><option value="out">Sin stock</option></select>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input type="text" id="sReminder" placeholder="Recordatorio de compra (opcional)..." style="flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;">
+            <button class="btn btn-primary btn-sm" onclick="saveSupply()">Guardar</button>
+            <button class="btn btn-ghost btn-sm" onclick="cancelSupply()">Cancelar</button>
           </div>
         </div>
 
-        <!-- TAB: INSUMOS -->
-        <div class="inv-tab-panel" id="tab-insumos">
-          <div class="supply-section-hdr">
-            <span class="supply-section-title">Insumos &amp; Stock</span>
-            <button class="btn btn-primary btn-sm" onclick="openAddSupply()">
-              <svg><use href="#s-plus"/></svg>Nuevo
-            </button>
-          </div>
+        <!-- Botón colapsable — solo colapsa el listado -->
+        <div class="inv-section-toggle" id="toggleInsumos" onclick="toggleInvSection('insumos')">
+          <span class="inv-section-label">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Inventario de insumos
+            <span class="inv-section-badge" id="badgeInsumos">0</span>
+          </span>
+          <svg class="inv-section-arrow" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="inv-section-body" id="bodyInsumos" style="display:none;">
           <div id="supplyList"></div>
-          <div id="supplyAddRow" style="display:none;">
-            <div style="background:rgba(51,77,40,0.06);border:1px solid rgba(51,77,40,0.15);border-radius:3px;padding:6px 8px;margin-bottom:5px;display:flex;flex-direction:column;gap:5px;">
-              <input type="text" id="sName" placeholder="Nombre del insumo..." style="padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;width:100%;">
-              <div style="display:grid;grid-template-columns:1fr 90px 1fr;gap:5px;">
-                <input type="number" id="sQty" placeholder="Cantidad" min="0" style="padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;">
-                <select id="sUnit" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option>unidades</option><option>kg</option><option>g</option><option>ml</option><option>bolsas</option><option>litros</option></select>
-                <select id="sStatus" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option value="ok">OK</option><option value="low">Poco</option><option value="out">Sin stock</option></select>
-              </div>
-            </div>
-            <div style="display:flex;gap:6px;margin-bottom:8px;">
-              <input type="text" id="sReminder" placeholder="Recordatorio de compra (opcional)..." style="flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;">
-              <button class="btn btn-primary btn-sm" onclick="saveSupply()">Guardar</button>
-              <button class="btn btn-ghost btn-sm" onclick="cancelSupply()">Cancelar</button>
-            </div>
-          </div>
           <div class="shopping-list" id="shoppingList"></div>
         </div>
       </div>
+      </div><!-- .col-inv-scroll -->
     </div>
 
     <!-- COL 2 (desktop): Calendario arriba + bloque Tareas expandible abajo -->
@@ -984,8 +1261,11 @@ button svg, button svg use { pointer-events: none; }
 
       <!-- Sub-col: TAREAS (drawer expandible en desktop, plano en móvil) -->
       <div class="col col-tasks tasks-collapsed" id="colTasks">
-        <div class="col-hdr" onclick="toggleTasksDrawer()" id="tasksDrawerHdr">
-          <span class="col-title">Tareas</span>
+        <div class="col-hdr" onclick="toggleTasksDrawer()" id="tasksDrawerHdr" style="cursor:pointer;user-select:none;">
+          <span class="col-title">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="margin-right:5px;"><use href="#s-cal"/></svg>
+            Tareas
+          </span>
           <div style="display:flex;align-items:center;gap:6px;">
             <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddTask()">
               <svg><use href="#s-plus"/></svg>Nueva
@@ -1550,14 +1830,31 @@ function updateSidebarWeather(temp, moonMark, icoId, hum) {
 /* ── Drawer de tareas (desktop) ── */
 let tasksDrawerOpen = false;
 function toggleTasksDrawer() {
-  // Only behaves as drawer on desktop
-  if (window.innerWidth <= 900) return;
-  tasksDrawerOpen = !tasksDrawerOpen;
   const col = document.getElementById('colTasks');
-  if (col) {
+  if (!col) return;
+  if (window.innerWidth <= 900) {
+    // Mobile: toggle open/close
+    col.classList.toggle('tasks-mobile-open');
+  } else {
+    // Desktop: expand/collapse drawer
+    tasksDrawerOpen = !tasksDrawerOpen;
     col.classList.toggle('tasks-collapsed', !tasksDrawerOpen);
     col.classList.toggle('tasks-expanded',   tasksDrawerOpen);
   }
+}
+
+
+/* ── MODO DÍA / NOCHE ── */
+(function initTheme() {
+  // Restore saved preference
+  if (localStorage.getItem('jardin-dark') === '1') {
+    document.body.classList.add('dark-mode');
+  }
+})();
+
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  try { localStorage.setItem('jardin-dark', isDark ? '1' : '0'); } catch(e) {}
 }
 
 (function init() {
@@ -1577,6 +1874,8 @@ function toggleTasksDrawer() {
   renderPlants();
   renderCal();
   renderTaskList();
+  updateInvBadge();
+  updateInvBadge();
 
   // Fecha por defecto en actividades
   document.getElementById('evDate').value = dStr(0);
@@ -1603,11 +1902,47 @@ function nav(id, btn) {
 }
 
 function switchInvTab(tab, el) {
-  document.querySelectorAll('.inv-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.inv-tab-panel').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
+  // legacy — kept for compatibility
+  switchInvSlider(tab);
+}
+
+function switchInvSlider(tab) {
+  // Update slider buttons
+  document.getElementById('sliderPlantas').classList.toggle('active', tab === 'plantas');
+  document.getElementById('sliderInsumos').classList.toggle('active', tab === 'insumos');
+  // Show/hide panels
+  document.getElementById('tab-plantas').style.display = tab === 'plantas' ? 'block' : 'none';
+  document.getElementById('tab-insumos').style.display = tab === 'insumos' ? 'block' : 'none';
+  // Update new button visibility
+  const btnNew = document.getElementById('btnNuevaPlanta');
+  if (btnNew) btnNew.style.display = tab === 'plantas' ? 'flex' : 'none';
   if (tab === 'insumos') renderSupplies();
+  // Store current tab
+  currentInvTab = tab;
+}
+
+let currentInvTab = 'plantas';
+let invPanelOpen  = false;
+
+function toggleInvSection(which) {
+  const cap    = which === 'plantas' ? 'Plantas' : 'Insumos';
+  const toggle = document.getElementById('toggle' + cap);
+  const body   = document.getElementById('body'   + cap);
+  if (!toggle || !body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  toggle.classList.toggle('open', !isOpen);
+  if (!isOpen && which === 'insumos') renderSupplies();
+  if (!isOpen && which === 'plantas') renderPlants();
+}
+
+function toggleInvPanel() { /* legacy — no-op */ }
+
+function updateInvBadge() {
+  const b = document.getElementById('badgePlantas');
+  if (b) b.textContent = plants.length;
+  const bs = document.getElementById('badgeInsumos');
+  if (bs) bs.textContent = supplies.length;
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -1770,6 +2105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Render lista de plantas ── */
 function renderPlants() {
+  updateInvBadge();
   document.getElementById('plantList').innerHTML = plants.map((p, i) => `
     <div class="pcard" onclick="openEditPlant(${p.id})">
       <div class="pcard-inner">
@@ -2106,6 +2442,7 @@ function renderSupplies() {
   const SBL = { ok:'sb-ok', low:'sb-low', out:'sb-out' };
   const SBT = { ok:'OK',    low:'Poco',   out:'Sin stock' };
 
+  updateInvBadge();
   document.getElementById('supplyList').innerHTML = supplies.map(s => `
     <div class="supply-item">
       <div class="supply-name">${s.name}</div>
