@@ -940,11 +940,13 @@ button svg, button svg use { pointer-events: none; }
           </div>
           <div id="supplyList"></div>
           <div id="supplyAddRow" style="display:none;">
-            <div class="supply-edit-row">
-              <input type="text" id="sName" placeholder="Nombre del insumo...">
-              <input type="number" id="sQty" placeholder="Stock" min="0" style="width:70px;">
-              <select id="sUnit"><option>unidades</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>bolsas</option><option>litros</option></select>
-              <select id="sStatus"><option value="ok">OK</option><option value="low">Poco</option><option value="out">Sin stock</option></select>
+            <div style="background:rgba(51,77,40,0.06);border:1px solid rgba(51,77,40,0.15);border-radius:3px;padding:6px 8px;margin-bottom:5px;display:flex;flex-direction:column;gap:5px;">
+              <input type="text" id="sName" placeholder="Nombre del insumo..." style="padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;width:100%;">
+              <div style="display:grid;grid-template-columns:1fr 90px 1fr;gap:5px;">
+                <input type="number" id="sQty" placeholder="Cantidad" min="0" style="padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;">
+                <select id="sUnit" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option>unidades</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>bolsas</option><option>litros</option></select>
+                <select id="sStatus" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option value="ok">OK</option><option value="low">Poco</option><option value="out">Sin stock</option></select>
+              </div>
             </div>
             <div style="display:flex;gap:6px;margin-bottom:8px;">
               <input type="text" id="sReminder" placeholder="Recordatorio de compra (opcional)..." style="flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;">
@@ -1150,7 +1152,7 @@ button svg, button svg use { pointer-events: none; }
         <div class="fld">
           <label>&nbsp;</label>
           <div style="display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);cursor:pointer;height:34px;" onclick="toggleFertRemind()">
-            <input type="checkbox" id="f-fert-remind" style="width:14px;height:14px;accent-color:var(--moss);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation();toggleFertRemind()">
+            <input type="checkbox" id="f-fert-remind" style="width:14px;height:14px;accent-color:var(--moss);cursor:pointer;flex-shrink:0;" onchange="toggleFertRemindFromCb()" onclick="event.stopPropagation()">
             <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink2);">Avisar próxima fertilización</span>
           </div>
         </div>
@@ -1273,7 +1275,7 @@ button svg, button svg use { pointer-events: none; }
         <div class="fld" style="position:relative;">
           <label>Planta / Ubicación</label>
           <input type="text" id="t-plant" placeholder="Todas o ingresá un nombre..." autocomplete="off" oninput="filterPlantSugg()" onfocus="showPlantSugg()">
-          <div id="plantSuggBox" style="display:none;position:fixed;background:var(--bg);border:1px solid var(--rule2);border-radius:3px;z-index:1000;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(28,28,23,0.15);"></div>
+          <div id="plantSuggBox" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);border:1px solid var(--rule2);border-radius:3px;z-index:2000;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(28,28,23,0.15);"></div>
         </div>
         <div class="fld"><label>Alarma</label>
           <select id="t-alarm">
@@ -2037,11 +2039,11 @@ function savePlant() {
 
 function onFertChange() {}
 
-function toggleFertRemind() {
+function toggleFertRemindFromCb() {
+  // Called from checkbox onchange — state already correct, just update UI
   const cb  = document.getElementById('f-fert-remind');
   const row = document.getElementById('fert-next-row');
   const inp = document.getElementById('f-fert-next');
-  if (document.activeElement !== cb) cb.checked = !cb.checked;
   if (cb.checked) {
     row.style.display = 'block';
     if (!inp.value) {
@@ -2055,6 +2057,15 @@ function toggleFertRemind() {
     inp.value = '';
   }
 }
+
+function toggleFertRemind() {
+  // Called from the div wrapper — manually toggle checkbox then update UI
+  const cb  = document.getElementById('f-fert-remind');
+  cb.checked = !cb.checked;
+  toggleFertRemindFromCb();
+}
+
+
 
 /* ── Dar de baja planta ── */
 function confirmRetirePlant() {
@@ -2297,34 +2308,12 @@ function deleteTask(id)  { tasks = tasks.filter(t => t.id !== id); renderTaskLis
 function showPlantSugg() {
   document.removeEventListener('click', closePlantSuggOutside);
   renderPlantSugg('');
-  // Use requestAnimationFrame to measure AFTER modal animation completes
-  requestAnimationFrame(() => {
-    const box = document.getElementById('plantSuggBox');
-    const inp = document.getElementById('t-plant');
-    if (!box || !inp) return;
-    const r = inp.getBoundingClientRect();
-    // If input has no real position yet (modal still animating), retry
-    if (r.width === 0) { setTimeout(showPlantSugg, 50); return; }
-    box.style.top   = (r.bottom + 2) + 'px';
-    box.style.left  = r.left + 'px';
-    box.style.width = r.width + 'px';
-    box.style.display = 'block';
-  });
-  setTimeout(() => document.addEventListener('click', closePlantSuggOutside), 100);
+  const box = document.getElementById('plantSuggBox');
+  if (box) box.style.display = 'block';
+  setTimeout(() => document.addEventListener('click', closePlantSuggOutside), 50);
 }
 function filterPlantSugg() {
   renderPlantSugg(document.getElementById('t-plant').value.trim());
-  // Keep dropdown positioned correctly while typing
-  const box = document.getElementById('plantSuggBox');
-  const inp = document.getElementById('t-plant');
-  if (box && inp && box.style.display !== 'none') {
-    const r = inp.getBoundingClientRect();
-    if (r.width > 0) {
-      box.style.top   = (r.bottom + 2) + 'px';
-      box.style.left  = r.left + 'px';
-      box.style.width = r.width + 'px';
-    }
-  }
 }
 function closePlantSuggOutside(e) {
   const box = document.getElementById('plantSuggBox');
