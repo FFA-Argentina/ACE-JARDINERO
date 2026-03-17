@@ -944,7 +944,7 @@ button svg, button svg use { pointer-events: none; }
               <input type="text" id="sName" placeholder="Nombre del insumo..." style="padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;width:100%;">
               <div style="display:grid;grid-template-columns:1fr 90px 1fr;gap:5px;">
                 <input type="number" id="sQty" placeholder="Cantidad" min="0" style="padding:4px 7px;font-size:12px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow',sans-serif;outline:none;">
-                <select id="sUnit" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option>unidades</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>bolsas</option><option>litros</option></select>
+                <select id="sUnit" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option>unidades</option><option>kg</option><option>g</option><option>ml</option><option>bolsas</option><option>litros</option></select>
                 <select id="sStatus" style="padding:4px 6px;font-size:11px;border:1px solid var(--rule2);border-radius:2px;background:var(--sf);color:var(--ink);font-family:'Barlow Condensed',sans-serif;outline:none;"><option value="ok">OK</option><option value="low">Poco</option><option value="out">Sin stock</option></select>
               </div>
             </div>
@@ -1272,10 +1272,12 @@ button svg, button svg use { pointer-events: none; }
         <div class="fld"><label>Fecha</label><input type="date" id="t-date"></div>
       </div>
       <div class="f2">
-        <div class="fld" style="position:relative;">
+        <div class="fld">
           <label>Planta / Ubicación</label>
-          <input type="text" id="t-plant" placeholder="Todas o ingresá un nombre..." autocomplete="off" oninput="filterPlantSugg()" onfocus="showPlantSugg()">
-          <div id="plantSuggBox" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);border:1px solid var(--rule2);border-radius:3px;z-index:2000;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(28,28,23,0.15);"></div>
+          <select id="t-plant-select" onchange="onPlantSelectChange()" style="margin-bottom:4px;">
+            <option value="Todas">Todas las plantas</option>
+          </select>
+          <input type="text" id="t-plant" placeholder="O escribí un nombre específico..." autocomplete="off" style="font-size:12px;padding:5px 8px;">
         </div>
         <div class="fld"><label>Alarma</label>
           <select id="t-alarm">
@@ -1307,7 +1309,7 @@ button svg, button svg use { pointer-events: none; }
       <div class="f2">
         <div class="fld"><label>Stock</label><input type="number" id="se-qty" min="0"></div>
         <div class="fld"><label>Unidad</label>
-          <select id="se-unit"><option>unidades</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>bolsas</option><option>litros</option></select>
+          <select id="se-unit"><option>unidades</option><option>kg</option><option>g</option><option>ml</option><option>bolsas</option><option>litros</option></select>
         </div>
       </div>
       <div class="fld"><label>Estado</label>
@@ -2305,21 +2307,72 @@ function toggleTask(id)  { const t = tasks.find(t => t.id === id); if (t) { t.do
 function deleteTask(id)  { tasks = tasks.filter(t => t.id !== id); renderTaskList(); renderCal(); }
 
 /* ── Sugerencias de plantas en modal tarea ── */
+function positionPlantSugg() {
+  const box = document.getElementById('plantSuggBox');
+  const inp = document.getElementById('t-plant');
+  if (!box || !inp) return;
+  const r   = inp.getBoundingClientRect();
+  const vw  = window.innerWidth;
+  const vh  = window.innerHeight;
+  const w   = Math.min(r.width, vw - 16);
+  let left  = r.left;
+  let top   = r.bottom + 2;
+  if (left + w > vw - 8) left = vw - w - 8;
+  if (left < 8) left = 8;
+  // If dropdown would go off bottom, show above input
+  const dropH = Math.min(220, vh * 0.4);
+  if (top + dropH > vh - 8) top = r.top - dropH - 2;
+  box.style.left  = left + 'px';
+  box.style.top   = top  + 'px';
+  box.style.width = w    + 'px';
+}
+
+function onPlantSelectChange() {
+  const sel = document.getElementById('t-plant-select');
+  const txt = document.getElementById('t-plant');
+  if (sel.value && sel.value !== '__custom__') {
+    txt.value = '';
+    selectedPlants = [sel.value];
+  }
+}
+
+function populatePlantSelect() {
+  const sel = document.getElementById('t-plant-select');
+  if (!sel) return;
+  // Keep first option "Todas"
+  sel.innerHTML = '<option value="Todas">Todas las plantas</option>';
+  plants.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+}
+
 function showPlantSugg() {
   document.removeEventListener('click', closePlantSuggOutside);
   renderPlantSugg('');
+  positionPlantSugg();
   const box = document.getElementById('plantSuggBox');
   if (box) box.style.display = 'block';
   setTimeout(() => document.addEventListener('click', closePlantSuggOutside), 50);
 }
+
+function closePlantSugg() {
+  const box = document.getElementById('plantSuggBox');
+  if (box) box.style.display = 'none';
+}
 function filterPlantSugg() {
   renderPlantSugg(document.getElementById('t-plant').value.trim());
+  positionPlantSugg();
+  const box = document.getElementById('plantSuggBox');
+  if (box && box.style.display === 'none') box.style.display = 'block';
 }
 function closePlantSuggOutside(e) {
   const box = document.getElementById('plantSuggBox');
   const inp = document.getElementById('t-plant');
   if (box && !box.contains(e.target) && e.target !== inp) {
-    box.style.display = 'none';
+    closePlantSugg();
     document.removeEventListener('click', closePlantSuggOutside);
   }
 }
@@ -2371,10 +2424,13 @@ function openAddTask() {
   document.getElementById('t-name').value  = '';
   document.getElementById('t-type').value  = 'r';
   document.getElementById('t-date').value  = dStr(0);
-  document.getElementById('t-plant').value = 'Todas';
+  document.getElementById('t-plant').value = '';
   document.getElementById('t-alarm').value = '';
   document.querySelector('#taskModal .mtitle').textContent = 'Nueva tarea';
   const delBtn = document.getElementById('taskDelBtn'); if (delBtn) delBtn.style.display = 'none';
+  populatePlantSelect();
+  const sel = document.getElementById('t-plant-select');
+  if (sel) sel.value = 'Todas';
   openModal('taskModal');
 }
 
@@ -2385,9 +2441,12 @@ function openEditTask(id) {
   document.getElementById('t-name').value  = t.name  || '';
   document.getElementById('t-type').value  = t.type  || 'r';
   document.getElementById('t-date').value  = t.date  || dStr(0);
-  document.getElementById('t-plant').value = t.plant || 'Todas';
+  document.getElementById('t-plant').value = '';
   document.getElementById('t-alarm').value = t.alarm || '';
   selectedPlants = t.plant ? t.plant.split(', ') : ['Todas'];
+  populatePlantSelect();
+  const selEl = document.getElementById('t-plant-select');
+  if (selEl) selEl.value = (t.plant && plants.find(p=>p.name===t.plant)) ? t.plant : 'Todas';
   document.querySelector('#taskModal .mtitle').textContent = 'Editar tarea';
   // Botón eliminar
   let delBtn = document.getElementById('taskDelBtn');
@@ -2406,8 +2465,10 @@ function saveTask() {
   const name     = document.getElementById('t-name').value.trim(); if (!name) return;
   const alarm    = document.getElementById('t-alarm').value;
   // Use typed value if available; fall back to 'Todas' only when saving with nothing selected
+  const selVal   = document.getElementById('t-plant-select')?.value || 'Todas';
   const typedVal = document.getElementById('t-plant').value.trim();
-  const plantVal = selectedPlants.length ? selectedPlants.join(', ') : (typedVal || 'Todas');
+  // Text input overrides select if user typed something
+  const plantVal = typedVal || selVal || 'Todas';
 
   if (editingTaskId) {
     const t = tasks.find(x => x.id === editingTaskId);
