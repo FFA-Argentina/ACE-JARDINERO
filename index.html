@@ -406,6 +406,37 @@ body {
 .fld textarea:focus { border-color: var(--sage); }
 .fld textarea { resize: vertical; min-height: 56px; line-height: 1.5; }
 
+/* Date inputs: forzar mismo alto y apariencia que text inputs en todos los navegadores */
+.fld input[type="date"],
+.ac-adder-row input[type="date"],
+input[type="date"] {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 34px;
+  font-family: 'Barlow', sans-serif;
+  color: var(--ink);
+  background: var(--sf);
+  border: 1px solid var(--rule2);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+}
+input[type="date"]:focus { border-color: var(--sage); outline: none; }
+/* Webkit date picker icon — alinear verticalmente */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+  margin-left: 4px;
+}
+/* iOS zoom fix para date */
+@media (max-width: 768px) {
+  input[type="date"] { font-size: 16px !important; }
+}
+
 /* Foto en modal planta */
 .mph         { height: 120px; background: var(--sf); border-radius: var(--radius-sm); border: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; }
 .mph img     { width: 100%; height: 100%; object-fit: cover; }
@@ -498,14 +529,6 @@ body {
   display: none;
 }
 .popup-base.open { display: block; }
-
-/* Overlay transparente detrás del popup de día */
-#dayOverlay {
-  position: fixed; inset: 0;
-  z-index: 790;
-  display: none;
-}
-#dayOverlay.open { display: block; }
 
 /* Popup de detalle de día */
 #dayPopup        { width: 220px; padding: 0; z-index: 800; }
@@ -1005,7 +1028,7 @@ button svg, button svg use { pointer-events: none; }
 <div id="dayPopup" class="popup-base">
   <div class="dp-hdr">
     <span class="dp-date" id="dpDate"></span>
-    <button type="button" class="dp-close" onclick="closeDayPopup()">
+    <button type="button" class="dp-close" onclick="closeDayPopup(event)">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
@@ -1060,7 +1083,7 @@ button svg, button svg use { pointer-events: none; }
 
       <!-- Foto + identificación IA -->
       <div style="position:relative;margin-bottom:10px;">
-        <div class="mph" onclick="document.getElementById('mPhotoIn').click()" id="mPhotoZone">
+        <div class="mph" id="mPhotoZone">
           <div class="mph-ph" id="mPhotoPh">
             <svg width="20" height="20"><use href="#s-cam"/></svg>
             <span>Agregar foto</span>
@@ -1123,13 +1146,19 @@ button svg, button svg use { pointer-events: none; }
 
       <!-- Fertilización + aviso -->
       <div class="f2" style="align-items:end;">
-        <div class="fld"><label>Última fertilización</label><input type="date" id="f-fert" onchange="onFertChange()"></div>
+        <div class="fld"><label>Última fertilización</label><input type="date" id="f-fert"></div>
         <div class="fld">
           <label>&nbsp;</label>
-          <div style="display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);cursor:pointer;height:34px;" onclick="document.getElementById('f-fert-remind').click()">
-            <input type="checkbox" id="f-fert-remind" style="width:14px;height:14px;accent-color:var(--moss);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation()">
+          <div style="display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--rule2);border-radius:3px;background:var(--sf);cursor:pointer;height:34px;" onclick="toggleFertRemind()">
+            <input type="checkbox" id="f-fert-remind" style="width:14px;height:14px;accent-color:var(--moss);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation();toggleFertRemind()">
             <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink2);">Avisar próxima fertilización</span>
           </div>
+        </div>
+      </div>
+      <div id="fert-next-row" style="display:none;margin-bottom:9px;">
+        <div class="fld" style="margin-bottom:0;">
+          <label>Fecha del próximo aviso de fertilización</label>
+          <input type="date" id="f-fert-next">
         </div>
       </div>
 
@@ -1244,7 +1273,7 @@ button svg, button svg use { pointer-events: none; }
         <div class="fld" style="position:relative;">
           <label>Planta / Ubicación</label>
           <input type="text" id="t-plant" placeholder="Todas o ingresá un nombre..." autocomplete="off" oninput="filterPlantSugg()" onfocus="showPlantSugg()">
-          <div id="plantSuggBox" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg);border:1px solid var(--rule2);border-radius:3px;z-index:600;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(28,28,23,0.12);"></div>
+          <div id="plantSuggBox" style="display:none;position:fixed;background:var(--bg);border:1px solid var(--rule2);border-radius:3px;z-index:1000;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(28,28,23,0.15);"></div>
         </div>
         <div class="fld"><label>Alarma</label>
           <select id="t-alarm">
@@ -1353,13 +1382,8 @@ const MOON_RECS   = {
   'Luna llena':       'Cosechá hierbas aromáticas. Evitá trasplantar.',
   'Cuarto menguante': 'Aplicá tratamientos contra plagas.',
 };
-// ─── CONFIGURACIÓN IA ────────────────────────────────────────────────
-// La app usa corsproxy.io para resolver la restricción CORS de GitHub Pages.
-// No requiere configuración adicional.
-// Si querés usar tu propio proxy, reemplazá API_PROXY_URL con tu URL.
 const API_URL = 'https://jardin-proxy.telramud.workers.dev';
-// ─────────────────────────────────────────────────────────────────────
-const AI_MODEL= 'claude-sonnet-4-5';
+const AI_MODEL= 'claude-sonnet-4-20250514';
 
 /* Datos de ejemplo (se reemplazan con los del usuario) */
 const SAMPLE_PLANTS = [
@@ -1592,14 +1616,14 @@ function requestGeo() {
   navigator.geolocation.getCurrentPosition(
     p => { loadWeather(p.coords.latitude, p.coords.longitude); revGeo(p.coords.latitude, p.coords.longitude); },
     ()  => { loadWeather(-34.6037, -58.3816); setGeoLabel('Buenos Aires, AR'); },
-    { timeout: 10000, maximumAge: 300000, enableHighAccuracy: false }
+    { timeout: 8000 }
   );
 }
 
 function setGeoLabel(t) { document.getElementById('geoLabel').textContent = t; }
 
 function revGeo(lat, lon) {
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`)
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
     .then(r => r.json())
     .then(d => {
       const c  = d.address?.city || d.address?.town || d.address?.village || '';
@@ -1820,6 +1844,8 @@ function clearPModal() {
   document.getElementById('mPhotoImg').src = '';
   const mIdBar = document.getElementById('mIdBar'); if (mIdBar) mIdBar.style.display = 'none';
   const fertRem = document.getElementById('f-fert-remind'); if (fertRem) fertRem.checked = false;
+  const fertNext = document.getElementById('f-fert-next'); if (fertNext) fertNext.value = '';
+  const fertRow = document.getElementById('fert-next-row'); if (fertRow) fertRow.style.display = 'none';
   document.getElementById('evTxt').value  = '';
   document.getElementById('evDate').value = dStr(0);
   window._mPhotoFile = null;
@@ -1851,69 +1877,43 @@ async function identifyFromModal() {
   const res  = document.getElementById('mIdResult');
   btn.disabled = true;
   res.innerHTML = '<span class="spin"></span> Identificando...';
-
-  try {
-    const b64 = await new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload  = e => resolve(e.target.result.split(',')[1]);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-    const mt = file.type || 'image/jpeg';
-
-    const resp = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 600,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
-            { type: 'text',  text: 'Identificá esta planta. Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin markdown, sin bloques de código. Formato exacto: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}' }
-          ]
-        }]
-      })
-    });
-
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error.message || 'API error');
-
-    const raw = data.content.map(c => c.text || '').join('').trim();
-    const pl  = JSON.parse(raw.replace(/^```[\w]*/g,'').replace(/```/g,'').trim());
-
-    if (pl.nombre_comun  && !document.getElementById('f-name').value)
-      document.getElementById('f-name').value = pl.nombre_comun;
-    if (pl.nombre_cientifico)
-      document.getElementById('f-species').value = pl.nombre_cientifico;
-    if (pl.riego_dias) { drumIdx = drumDaysToIdx(pl.riego_dias); renderDrum(); }
-    if (pl.luz) {
-      const luzMap = { alta:'Alta — sol directo', media:'Media — luz indirecta', baja:'Baja — poca luz' };
-      const k = Object.keys(luzMap).find(k => pl.luz.toLowerCase().includes(k));
-      if (k) document.getElementById('f-luz').value = luzMap[k];
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const b64 = e.target.result.split(',')[1], mt = file.type || 'image/jpeg';
+    try {
+      const r = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: AI_MODEL, max_tokens: 500,
+          messages: [{ role:'user', content:[
+            { type:'image', source:{ type:'base64', media_type:mt, data:b64 } },
+            { type:'text',  text:'Identificá esta planta. Respondé SOLO JSON sin markdown: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}. riego_dias: número entero de días entre riegos. Cuidados: máx 15 palabras.' }
+          ]}]
+        })
+      });
+      const data = await r.json();
+      const raw  = data.content.map(c => c.text || '').join('');
+      const pl   = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      // Rellenar campos del formulario con los datos identificados
+      if (pl.nombre_comun  && !document.getElementById('f-name').value)  document.getElementById('f-name').value    = pl.nombre_comun;
+      if (pl.nombre_cientifico) document.getElementById('f-species').value = pl.nombre_cientifico;
+      if (pl.riego_dias)   { drumIdx = drumDaysToIdx(pl.riego_dias); renderDrum(); }
+      if (pl.luz) {
+        const luzMap = { alta:'Alta — sol directo', media:'Media — luz indirecta', baja:'Baja — poca luz' };
+        const k = Object.keys(luzMap).find(k => pl.luz.toLowerCase().includes(k));
+        if (k) document.getElementById('f-luz').value = luzMap[k];
+      }
+      if (pl.cuidados && !document.getElementById('f-notes').value) document.getElementById('f-notes').value = pl.cuidados;
+      res.textContent = '✓ ' + pl.nombre_comun + ' / ' + pl.nombre_cientifico;
+      res.style.color = 'var(--sage-lt)';
+    } catch (err) {
+      res.textContent = 'No se pudo identificar. Usá una foto más nítida.';
+      res.style.color = 'rgba(168,194,153,0.5)';
     }
-    if (pl.cuidados && !document.getElementById('f-notes').value)
-      document.getElementById('f-notes').value = pl.cuidados;
-
-    res.textContent = '✓ ' + (pl.nombre_comun || '') + ' / ' + (pl.nombre_cientifico || '');
-    res.style.color = 'var(--sage-lt)';
-
-  } catch (err) {
-    console.error('identifyFromModal error:', err);
-    const msg2 = err.message || '';
-    const isCors2 = msg2.includes('Failed to fetch') || msg2.includes('NetworkError') || msg2.includes('Load failed');
-    res.textContent = isCors2
-      ? 'Error CORS: configurá el proxy en Cloudflare Workers (ver anthropic-proxy-worker.js)'
-      : 'Error: ' + msg2.slice(0, 80);
-    res.style.color = 'rgba(168,194,153,0.5)';
-  }
-  btn.disabled = false;
+    btn.disabled = false;
+  };
+  reader.readAsDataURL(file);
 }
 
 /* ── Identificación IA desde barra lateral (inventario) ── */
@@ -1921,71 +1921,37 @@ async function identifyPlant(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
   const ld   = document.getElementById('id-loading');
-  const resBox = document.getElementById('resBox');
   ld.style.display = 'flex';
-  resBox.style.display = 'none';
-
-  // Convert to base64
-  const b64 = await new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload  = e => res(e.target.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-  const mt = file.type || 'image/jpeg';
-
-  try {
-    const resp = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 600,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
-            { type: 'text',  text: 'Identificá esta planta. Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin markdown, sin bloques de código. Formato exacto: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}' }
-          ]
-        }]
-      })
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      throw new Error('HTTP ' + resp.status + ': ' + errText.slice(0,200));
+  document.getElementById('resBox').style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const b64 = e.target.result.split(',')[1], mt = file.type || 'image/jpeg';
+    try {
+      const r = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: AI_MODEL, max_tokens: 500,
+          messages: [{ role:'user', content:[
+            { type:'image', source:{ type:'base64', media_type:mt, data:b64 } },
+            { type:'text',  text:'Identificá esta planta. Respondé SOLO JSON sin markdown: {"nombre_comun":"","nombre_cientifico":"","riego_dias":7,"luz":"","cuidados":""}. riego_dias: número entero de días entre riegos. Cuidados: máx 15 palabras.' }
+          ]}]
+        })
+      });
+      const data = await r.json();
+      const pl   = JSON.parse(data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim());
+      identifiedData = pl;
+      document.getElementById('resName').textContent   = pl.nombre_comun + ' / ' + pl.nombre_cientifico;
+      document.getElementById('resDetail').textContent = 'Riego: cada ' + pl.riego_dias + ' días · Luz: ' + pl.luz;
+      document.getElementById('resCare').textContent   = pl.cuidados;
+      document.getElementById('resBox').style.display  = 'block';
+    } catch (err) {
+      document.getElementById('resBox').innerHTML = '<p style="font-size:11px;color:var(--ink3);">No se pudo identificar. Usá foto más nítida.</p>';
+      document.getElementById('resBox').style.display = 'block';
     }
-
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-
-    const raw = data.content.map(c => c.text || '').join('').trim();
-    // Strip any accidental markdown fences
-    const clean = raw.replace(/^```[\w]*/g,'').replace(/```/g,'').trim();
-    const pl = JSON.parse(clean);
-
-    identifiedData = pl;
-    document.getElementById('resName').textContent   = (pl.nombre_comun || '?') + ' / ' + (pl.nombre_cientifico || '?');
-    document.getElementById('resDetail').textContent = 'Riego: cada ' + (pl.riego_dias || '?') + ' días · Luz: ' + (pl.luz || '?');
-    document.getElementById('resCare').textContent   = pl.cuidados || '';
-    resBox.style.display = 'block';
-
-  } catch (err) {
-    console.error('identifyPlant error:', err);
-    const msg = err.message || '';
-    const isCors = msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed');
-    const userMsg = isCors
-      ? 'Error de conexión con la IA. Si estás en GitHub Pages, necesitás configurar el proxy: deployá anthropic-proxy-worker.js en Cloudflare Workers y actualizá API_URL en el HTML.'
-      : 'Error al identificar: ' + msg.slice(0, 100);
-    resBox.innerHTML = '<p style="font-size:11px;color:var(--ink3);">' + userMsg + '</p>';
-    resBox.style.display = 'block';
-  }
-
-  ld.style.display = 'none';
+    ld.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
 }
 
 function addFromIdentify() {
@@ -2060,18 +2026,35 @@ function savePlant() {
   }
 
   // Crear tarea de recordatorio de fertilización
-  if (fertRemind && fertDate) {
-    const nextFert = new Date(fertDate + 'T12:00:00');
-    nextFert.setDate(nextFert.getDate() + 30);
-    const nextDs = nextFert.toISOString().split('T')[0];
-    if (!tasks.some(t => t.type === 'a' && t.plant === name && t.date === nextDs)) {
+  if (fertRemind) {
+    const nextDs = document.getElementById('f-fert-next')?.value;
+    if (nextDs && !tasks.some(t => t.type === 'a' && t.plant === name && t.date === nextDs)) {
       tasks.push({ id: Date.now() + 1, name: 'Fertilizar ' + name, type: 'a', date: nextDs, plant: name, done: false, alarm: '1d' });
     }
   }
   closePlantModal(); renderPlants(); renderCal(); renderTaskList();
 }
 
-function onFertChange() { /* puede extenderse para validaciones */ }
+function onFertChange() {}
+
+function toggleFertRemind() {
+  const cb  = document.getElementById('f-fert-remind');
+  const row = document.getElementById('fert-next-row');
+  const inp = document.getElementById('f-fert-next');
+  if (document.activeElement !== cb) cb.checked = !cb.checked;
+  if (cb.checked) {
+    row.style.display = 'block';
+    if (!inp.value) {
+      const base = document.getElementById('f-fert').value || new Date().toISOString().split('T')[0];
+      const d = new Date(base + 'T12:00:00');
+      d.setDate(d.getDate() + 30);
+      inp.value = d.toISOString().split('T')[0];
+    }
+  } else {
+    row.style.display = 'none';
+    inp.value = '';
+  }
+}
 
 /* ── Dar de baja planta ── */
 function confirmRetirePlant() {
@@ -2230,54 +2213,50 @@ function showDayPopup(event, ds) {
   const dt       = new Date(ds + 'T12:00:00');
   const dayTasks = tasks.filter(t => t.date === ds);
   const popup    = document.getElementById('dayPopup');
-  const overlay  = document.getElementById('dayOverlay');
-  const BC = {r:'tb-r',a:'tb-a',p:'tb-p',t:'tb-t',o:'tb-o'};
-  const BL = {r:'Riego',a:'Abono',p:'Poda',t:'Tratamiento',o:'Tarea'};
 
-  document.getElementById('dpDate').textContent =
-    dt.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  document.getElementById('dpDate').textContent = dt.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
   document.getElementById('dpBody').innerHTML = !dayTasks.length
     ? '<div class="dp-empty">Sin tareas para este día.</div>'
     : dayTasks.map(t => `
         <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--rule);">
-          <div class="tcb ${t.done?'done':''}" onclick="event.stopPropagation();toggleTask(${t.id})" style="flex-shrink:0;">${sv('s-ok',8,8)}</div>
+          <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id});showDayPopup(event,'${ds}')" style="flex-shrink:0;">${sv('s-ok',8,8)}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;${t.done?'text-decoration:line-through;color:var(--ink3);':''}">${t.name}</div>
             <div style="display:flex;gap:4px;margin-top:2px;align-items:center;">
-              <span class="tbadge ${BC[t.type]||'tb-o'}">${BL[t.type]||'Tarea'}</span>
+              <span class="tbadge ${TASK_BADGE_CLS[t.type]||'tb-o'}">${TASK_TYPES[t.type]||'Tarea'}</span>
               <span style="font-size:9px;color:var(--ink3);">${t.plant||''}</span>
             </div>
           </div>
         </div>`).join('');
 
-  // Position popup near the clicked cell
+  // Posicionar popup junto a la celda
   const rect = event.target.closest('.cd').getBoundingClientRect();
   const vw = window.innerWidth, vh = window.innerHeight;
   const pw = 230;
-  // Reset inline styles before measuring
   popup.style.cssText = '';
   popup.classList.add('open');
   const ph2 = popup.offsetHeight || 220;
   let left = rect.right + 8, top = rect.top;
   if (left + pw > vw - 8) left = rect.left - pw - 8;
+  if (left < 8) left = Math.max(8, (vw - pw) / 2);
   if (top + ph2 > vh - 8) top = vh - ph2 - 8;
   if (top < 8) top = 8;
   popup.style.left = left + 'px';
   popup.style.top  = top  + 'px';
-
-  // Show overlay (outside .app so overflow:hidden can't clip it)
-  if (overlay) overlay.style.display = 'block';
+  const ov2 = document.getElementById('dayOverlay'); if(ov2) ov2.style.display='block';
 }
 
-function closeDayPopup() {
-  const popup = document.getElementById('dayPopup');
-  const overlay = document.getElementById('dayOverlay');
-  // Remove class AND clear any inline display style
-  popup.classList.remove('open');
-  popup.style.display = '';
-  if (overlay) overlay.style.display = 'none';
+let _dayPopupClosing = false;
+function closeDayPopup(evt) {
+  if (evt) { evt.stopPropagation(); evt.preventDefault(); }
+  _dayPopupClosing = true;
+  document.getElementById('dayPopup').classList.remove('open');
+  document.removeEventListener('click', closeDayPopupOutside);
+  // Reset flag after current event cycle
+  setTimeout(() => { _dayPopupClosing = false; }, 0);
 }
+
 
 /* ─────────────────────────────────────────────────────────────────
    § 3.10  TASKS — lista de tareas, modal y alarmas
@@ -2293,7 +2272,7 @@ function renderTaskList() {
     : mt.map(t => {
         const dl        = new Date(t.date + 'T12:00:00').toLocaleDateString('es-AR', { day:'numeric', month:'short' });
         const isOverdue = !t.done && t.date < today;
-        return `<div class="task-card ${isOverdue?'overdue-task':''}" onclick="openEditTask(${t.id})" style="cursor:pointer;">
+        return `<div class="task-card ${isOverdue?'overdue-task':''}" ondblclick="openEditTask(${t.id})">
           <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id})">${sv('s-ok',8,8)}</div>
           <div class="task-body">
             <div class="task-nm ${t.done?'done':''}">${t.name}</div>
@@ -2317,9 +2296,16 @@ function deleteTask(id)  { tasks = tasks.filter(t => t.id !== id); renderTaskLis
 /* ── Sugerencias de plantas en modal tarea ── */
 function showPlantSugg() {
   document.removeEventListener('click', closePlantSuggOutside);
-  renderPlantSugg('');  // always show full list on focus
+  renderPlantSugg('');
   const box = document.getElementById('plantSuggBox');
-  if (box) box.style.display = 'block';
+  const inp = document.getElementById('t-plant');
+  if (box && inp) {
+    const r = inp.getBoundingClientRect();
+    box.style.top   = (r.bottom + 2) + 'px';
+    box.style.left  = r.left + 'px';
+    box.style.width = r.width + 'px';
+    box.style.display = 'block';
+  }
   setTimeout(() => document.addEventListener('click', closePlantSuggOutside), 50);
 }
 function filterPlantSugg() {
@@ -2562,6 +2548,5 @@ function confirmRetirePlant() {
   openModal('retireModal');
 }
 </script>
-<div id="dayOverlay" onclick="closeDayPopup()" style="display:none;position:fixed;inset:0;z-index:790;background:transparent;"></div>
 </body>
 </html>
