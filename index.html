@@ -2272,7 +2272,7 @@ function renderTaskList() {
     : mt.map(t => {
         const dl        = new Date(t.date + 'T12:00:00').toLocaleDateString('es-AR', { day:'numeric', month:'short' });
         const isOverdue = !t.done && t.date < today;
-        return `<div class="task-card ${isOverdue?'overdue-task':''}" ondblclick="openEditTask(${t.id})">
+        return `<div class="task-card ${isOverdue?'overdue-task':''}" onclick="openEditTask(${t.id})" style="cursor:pointer;">
           <div class="tcb ${t.done?'done':''}" onclick="toggleTask(${t.id})">${sv('s-ok',8,8)}</div>
           <div class="task-body">
             <div class="task-nm ${t.done?'done':''}">${t.name}</div>
@@ -2297,19 +2297,34 @@ function deleteTask(id)  { tasks = tasks.filter(t => t.id !== id); renderTaskLis
 function showPlantSugg() {
   document.removeEventListener('click', closePlantSuggOutside);
   renderPlantSugg('');
-  const box = document.getElementById('plantSuggBox');
-  const inp = document.getElementById('t-plant');
-  if (box && inp) {
+  // Use requestAnimationFrame to measure AFTER modal animation completes
+  requestAnimationFrame(() => {
+    const box = document.getElementById('plantSuggBox');
+    const inp = document.getElementById('t-plant');
+    if (!box || !inp) return;
     const r = inp.getBoundingClientRect();
+    // If input has no real position yet (modal still animating), retry
+    if (r.width === 0) { setTimeout(showPlantSugg, 50); return; }
     box.style.top   = (r.bottom + 2) + 'px';
     box.style.left  = r.left + 'px';
     box.style.width = r.width + 'px';
     box.style.display = 'block';
-  }
-  setTimeout(() => document.addEventListener('click', closePlantSuggOutside), 50);
+  });
+  setTimeout(() => document.addEventListener('click', closePlantSuggOutside), 100);
 }
 function filterPlantSugg() {
   renderPlantSugg(document.getElementById('t-plant').value.trim());
+  // Keep dropdown positioned correctly while typing
+  const box = document.getElementById('plantSuggBox');
+  const inp = document.getElementById('t-plant');
+  if (box && inp && box.style.display !== 'none') {
+    const r = inp.getBoundingClientRect();
+    if (r.width > 0) {
+      box.style.top   = (r.bottom + 2) + 'px';
+      box.style.left  = r.left + 'px';
+      box.style.width = r.width + 'px';
+    }
+  }
 }
 function closePlantSuggOutside(e) {
   const box = document.getElementById('plantSuggBox');
