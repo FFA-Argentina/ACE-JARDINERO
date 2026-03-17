@@ -1353,7 +1353,12 @@ const MOON_RECS   = {
   'Luna llena':       'Cosechá hierbas aromáticas. Evitá trasplantar.',
   'Cuarto menguante': 'Aplicá tratamientos contra plagas.',
 };
-const API_URL = 'https://api.anthropic.com/v1/messages';
+// ─── CONFIGURACIÓN IA ────────────────────────────────────────────────
+// La app usa corsproxy.io para resolver la restricción CORS de GitHub Pages.
+// No requiere configuración adicional.
+// Si querés usar tu propio proxy, reemplazá API_PROXY_URL con tu URL.
+const API_URL = 'https://jardin-proxy.telramud.workers.dev';
+// ─────────────────────────────────────────────────────────────────────
 const AI_MODEL= 'claude-sonnet-4-5';
 
 /* Datos de ejemplo (se reemplazan con los del usuario) */
@@ -1860,6 +1865,7 @@ async function identifyFromModal() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
@@ -1903,7 +1909,7 @@ async function identifyFromModal() {
     const msg2 = err.message || '';
     const isCors2 = msg2.includes('Failed to fetch') || msg2.includes('NetworkError') || msg2.includes('Load failed');
     res.textContent = isCors2
-      ? 'Requiere servidor web activo e internet. No funciona desde archivo local.'
+      ? 'Error CORS: configurá el proxy en Cloudflare Workers (ver anthropic-proxy-worker.js)'
       : 'Error: ' + msg2.slice(0, 80);
     res.style.color = 'rgba(168,194,153,0.5)';
   }
@@ -1933,6 +1939,7 @@ async function identifyPlant(input) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
@@ -1972,7 +1979,7 @@ async function identifyPlant(input) {
     const msg = err.message || '';
     const isCors = msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed');
     const userMsg = isCors
-      ? 'La IA requiere conexión activa a internet y que la app esté servida desde un servidor web (no como archivo local). Verificá tu conexión.'
+      ? 'Error de conexión con la IA. Si estás en GitHub Pages, necesitás configurar el proxy: deployá anthropic-proxy-worker.js en Cloudflare Workers y actualizá API_URL en el HTML.'
       : 'Error al identificar: ' + msg.slice(0, 100);
     resBox.innerHTML = '<p style="font-size:11px;color:var(--ink3);">' + userMsg + '</p>';
     resBox.style.display = 'block';
